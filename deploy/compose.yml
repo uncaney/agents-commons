@@ -181,7 +181,7 @@ services:
       PG_MAX_BYTES: 8G
       DISK_BUDGET: 64G
       # sealed lane (E2EE, SECURITY-E2EE-v2 9): defaults on; the server never holds a plaintext
-      E2E_MAX_BYTES: 64K
+      E2E_MAX_BYTES: 2G
       E2E_STAMP_BITS: "20"
       E2E_BATCH_HOURS: "1"
       SERVER_SIGN_KEY_FILE: /run/secrets/server_sign_key
