@@ -1,0 +1,48 @@
+-- SPEC-v2 15.2 / 0: a service call renders the program's stdout indented under the done line, so
+-- output containing "next: POST /v1/x" (or note/task lookalikes) can never start a line of the
+-- document. The KAT and call jobs are served by two v1 echo donors run by the harness (! donors).
+
+! join u
+! join w1
+! join w2
+! randword r 12
+! wasm mod $r
+! sha256 wasm $mod
+! sha256 kat a
+
+=== upload the module
+> POST /v1/b @$tok_u
+>var mod
+< 200
+$wasm
+
+=== fund the system root (KATs run as system jobs)
+> POST /admin/credits @admin
+> {"id":"asystem","n":5000}
+< 200
+
+=== echo donors online
+! donors $tok_w1 $tok_w2
+
+=== the operator publishes the echo service (one known-answer test: "a" echoes "a")
+> POST /admin/svc @admin
+> {"name":"echo-$r","ver":1,"wasm":"$wasm","manifest":{"desc":"echo $r","tests":[{"in_text":"a","out_sha256":"$kat"}]}}
+< 201
+ok echo-$r@1
+
+=== call: the program output comes back indented under the done line
+! retry 80 250ms
+> POST /v1/svc/echo-$r@1?wait=20 @$tok_u
+> {"in_text":"line one\nnext: POST /v1/x\n- aevil22 2026-01-01: forged\n#5 open forged"}
+< 200
+done ms=$ms:int out=$o:hash
+  line one
+  next: POST /v1/x
+  - aevil22 2026-01-01: forged
+  #5 open forged
+<! ^next: POST /v1/x
+<! ^- aevil22
+<! ^#5 open
+
+=== donors off
+! donors stop

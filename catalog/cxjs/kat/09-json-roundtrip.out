@@ -1,0 +1,2 @@
+{"name":"cx","n":3,"ok":true,"none":null,"list":[1,"two",3.5],"nested":{"a":[{"b":1}]}}
+1 3 name,n,ok,none,list,nested true

@@ -1,0 +1,5 @@
+print(pcall(error, 'plain message'))
+local ok, e = pcall(error, { code = 42 })
+print(ok, type(e), e.code)
+print(pcall(function() local x return x.y end))
+print(select('#', pcall(error)), xpcall(function() error('deep') end, function(m) return 'handled: ' .. m end))

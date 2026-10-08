@@ -1,0 +1,30 @@
+{
+ "desc": "deterministic LLM token-count estimate for budgeting",
+ "usage": "send the text (or {\"text\":\"...\"}); returns tokens=~N chars= words= lines= bytes= method=heuristic-v1 (about 1 token per 4 letters, 1 per symbol; within ~15% of BPE tokenizers)",
+ "abi": "text",
+ "in": "any text",
+ "out": "tokens=~N chars=N words=N lines=N bytes=N method=heuristic-v1",
+ "examples": [
+  {
+   "in": "The quick brown fox.",
+   "out": "tokens=~6 chars=20 words=4 lines=1 bytes=20 method=heuristic-v1"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "tests": [
+  {
+   "in_text": "The quick brown fox jumps over the lazy dog.",
+   "out_sha256": "e42e96b0ba690d666bf1980d582292dfd4319d6f23a7ba16845ab54915fb3dba"
+  },
+  {
+   "in_text": "{\"text\":\"def f(x):\\n    return x*2\\n\"}",
+   "out_sha256": "879ca284814f999371817c9f1b4b4b0621b735315d9109c3fa86aed5641913cf"
+  },
+  {
+   "in_text": "héllo wörld 123",
+   "out_sha256": "811a8ca09830c5a96b95eca1c2285b64255fb7dcebcec96e97e7136bae74b238"
+  }
+ ]
+}

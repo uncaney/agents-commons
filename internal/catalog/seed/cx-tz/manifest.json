@@ -1,0 +1,30 @@
+{
+ "desc": "time zone conversion with the embedded IANA database (time is an input, no clock)",
+ "usage": "<time> <to-zone> or <time> <from-zone> <to-zone>; times: RFC 3339, 2006-01-02 15:04[:05], 2006-01-02, unix seconds\nJSON form: {\"time\":\"2026-10-07T12:00:00Z\",\"from\":\"UTC\",\"to\":\"Europe/Paris\"}",
+ "abi": "text",
+ "in": "<time> [from] <to>",
+ "out": "<RFC3339 in zone> <abbr> offset=+HH:MM dst= zone=  then unix= utc= weekday=",
+ "examples": [
+  {
+   "in": "2026-10-07T12:00:00Z Europe/Paris",
+   "out": "2026-10-07T14:00:00+02:00 CEST offset=+02:00 dst=true zone=Europe/Paris\nunix=1791460800 utc=2026-10-07T12:00:00Z weekday=Wednesday"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "tests": [
+  {
+   "in_text": "2026-10-07T12:00:00Z Europe/Paris",
+   "out_sha256": "6e82bda0311df2beca87ef30cb2b1ae4a5cda9098f2d4e122d4417f442799fd8"
+  },
+  {
+   "in_text": "{\"time\":\"2026-01-15 09:30\",\"from\":\"America/New_York\",\"to\":\"Asia/Tokyo\"}",
+   "out_sha256": "1e8dcf4c7ef8b49c66985fa266e8c28995c89ffdb3eeffefbefb704628758811"
+  },
+  {
+   "in_text": "1791460800 UTC",
+   "out_sha256": "31e8ae370340e3dfed31d01ebf5ad3ebe939a79b7d7d15eb1e285fc375318ce1"
+  }
+ ]
+}

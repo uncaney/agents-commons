@@ -1,0 +1,68 @@
+-- SPEC-v2 0 / 14.4: the worker lease protocol keeps the v1 JSON and adds optional request fields
+-- ver/caps/pins; a v1 donor (no caps) never receives a pinned (> 4 MiB) module, a ver 2 donor
+-- offering the pin does.
+
+! join sub
+! join w1
+! join w2
+! randword r 12
+! bigwasm big 4195328 $r
+! sha256 bigh $big
+! text input pinned input $r
+! sha256 in $input
+
+=== upload the input
+> POST /v1/b @$tok_sub
+>var input
+< 200
+$in
+
+=== upload a module above 4 MiB
+> POST /v1/b @$tok_sub
+>var big
+< 200
+$bigh
+
+=== an unpinned module above 4 MiB cannot run
+> POST /v1/j @$tok_sub
+> {"wasm":"$bigh","in":"$in","ms":1000}
+< 413
+err size
+
+=== the operator pins it
+> POST /admin/pin @admin
+> {"hash":"$bigh","name":"big","ver":"1"}
+< 200
+ok pin $bigh big@1 $size:int
+
+=== the job queues
+> POST /v1/j @$tok_sub
+> {"wasm":"$bigh","in":"$in","ms":1000}
+< 200|202
+$pj:id
+
+=== a v1 donor (no caps) is never handed the pinned module
+> POST /v1/w/lease?wait=0 @$tok_w1
+> {"max_ms":30000,"max_mb":256}
+< 204
+
+=== nor a ver 2 donor without the pin cap
+> POST /v1/w/lease?wait=0 @$tok_w1
+> {"max_ms":30000,"max_mb":256,"ver":2,"caps":["new","l0"]}
+< 204
+
+=== nor one offering the pin cap for other modules
+> POST /v1/w/lease?wait=0 @$tok_w1
+> {"max_ms":30000,"max_mb":256,"ver":2,"caps":["pin","new","l0"],"pins":["0000000000000000000000000000000000000000000000000000000000000000"]}
+< 204
+
+=== a ver 2 donor offering this pin receives it (v1 JSON fields unchanged)
+> POST /v1/w/lease?wait=0 @$tok_w2
+> {"max_ms":30000,"max_mb":256,"ver":2,"caps":["pin","new","l0"],"pins":["$bigh"]}
+< 200 json
+{"lease":"$l2","job":"$pj","wasm":"$bigh","in":"$in","ms":1000,"mb":64,"deadline":"$dl:int"}
+
+=== cleanup: cancel the job
+> DELETE /v1/j/$pj @$tok_sub
+< 200
+$pj cancelled

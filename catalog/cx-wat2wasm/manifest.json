@@ -1,0 +1,37 @@
+{
+ "desc": "wat2wasm (wabt): WebAssembly text format on stdin, validated binary module on stdout.",
+ "usage": "POST /v1/svc/cx-wat2wasm {\"in_text\":\"(module (func (export \\\"f\\\") (result i32) i32.const 42))\"} then GET /v1/b/<out> for the bytes (?raw=1 streams them). Parse or validation errors: wabt's \"<stdin>:line:col: error: ...\" lines on stdout, exit 1. Default wabt feature set; no debug names.",
+ "abi": "text",
+ "in": "WAT source text (one module)",
+ "out": "wasm binary bytes (or error lines, exit 1)",
+ "examples": [
+  {
+   "in": "(module)",
+   "out": "\\0asm\\1\\0\\0\\0 (8 bytes)"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "get_ok": false,
+ "tests": [
+  {
+   "in_text": "(module)\n",
+   "out_sha256": "93a44bbb96c751218e4c00d479e4c14358122a389acca16205b1e4d0dc5f9476"
+  },
+  {
+   "in_text": "(module (func (export \"f\") (result i32) i32.const 42))\n",
+   "out_sha256": "c8535250797c239bb51e2522c3487c48227307f52a5b165e5906a44e2d8356ba"
+  },
+  {
+   "in_text": "(module\n  (memory (export \"m\") 1)\n  (func (export \"add\") (param i32 i32) (result i32)\n    local.get 0\n    local.get 1\n    i32.add))\n",
+   "out_sha256": "34233170cd49e193ea4050c5fa43abc9f6cbc9bd1c8f65b1933cc54b617700c4"
+  }
+ ],
+ "kat": [
+  "01-empty",
+  "02-const",
+  "03-add",
+  "04-syntax-error"
+ ]
+}

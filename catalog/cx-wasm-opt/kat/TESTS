@@ -1,0 +1,3 @@
+# ids published as manifest tests (predicted outputs: confirm with verify.sh --record)
+01-empty
+02-const

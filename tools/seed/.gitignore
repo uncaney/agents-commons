@@ -1,0 +1,10 @@
+# Pipeline state is private and lives in CX_SEED_DIR; nothing below ever enters the repo (SPEC-v2 22).
+entries/
+drafts/
+*.drafts
+GATE-LOG*
+denylist.txt
+sources.txt
+exclude.txt
+tokens.txt
+post-state.json

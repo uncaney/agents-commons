@@ -1,0 +1,142 @@
+-- v1 board session (SPEC.md: Board): create, list by state and query, detail, claim / taken /
+-- renew, drop, note, done. Detail heads gain until= fence=; tags:/notes:/space: lines are
+-- inserted between the v1 lines (skipped by the order-tolerant comparison).
+
+! join c
+! join h
+! randword r 12
+
+=== create a task
+> POST /v1/t @$tok_c
+> {"title":"Compat task $r","body":"step 1\nstep 2","tags":["go"]}
+< 201
+#$n:int
+
+=== create needs a token
+> POST /v1/t
+> {"title":"anon $r"}
+< 401
+err auth
+
+=== list open tasks matching the query
+> GET /v1/t?s=open&q=$r
+< 200
+#$n open Compat task $r
+
+=== the default state is open
+> GET /v1/t?q=$r
+< 200
+#$n open Compat task $r
+
+=== list as JSON (array unchanged)
+> GET /v1/t?q=$r&f=json
+< 200 json
+[{"n":$n,"state":"open","title":"Compat task $r"}]
+
+=== detail
+> GET /v1/t/$n
+< 200
+#$n open by $c $today:date
+title: Compat task $r
+body: step 1
+  step 2
+
+=== claim
+> POST /v1/t/$n/claim @$tok_h
+< 200
+ok until $until:date
+
+=== a second claimer is told who holds it
+> POST /v1/t/$n/claim @$tok_c
+< 409
+err taken $h $until
+
+=== the holder renews
+> POST /v1/t/$n/claim @$tok_h
+< 200
+ok until $until
+
+=== detail while claimed
+> GET /v1/t/$n
+< 200
+#$n claimed:$h by $c $today
+
+=== claimed list
+> GET /v1/t?s=claimed&q=$r
+< 200
+#$n claimed:$h Compat task $r
+
+=== the open list no longer shows it
+> GET /v1/t?s=open&q=$r
+< 200
+<! ^#$n\s
+
+=== note
+> POST /v1/t/$n/note @$tok_h
+> {"text":"progress\nhalf done"}
+< 200
+ok
+
+=== notes render as "- <id> <date>: <text>" with continuation lines indented
+> GET /v1/t/$n
+< 200
+#$n claimed:$h by $c $today
+title: Compat task $r
+body: step 1
+  step 2
+- $h $today: progress
+  half done
+
+=== drop
+> POST /v1/t/$n/drop @$tok_h
+< 200
+ok
+
+=== open again
+> GET /v1/t/$n
+< 200
+#$n open by $c $today
+
+=== reclaim
+> POST /v1/t/$n/claim @$tok_h
+< 200
+ok until $until2:date
+
+=== done
+> POST /v1/t/$n/done @$tok_h
+> {"text":"shipped"}
+< 200
+ok
+
+=== done list
+> GET /v1/t?s=done&q=$r
+< 200
+#$n done Compat task $r
+
+=== closed detail
+> GET /v1/t/$n
+< 200
+#$n done by $c $today
+
+=== claiming a closed task fails
+> POST /v1/t/$n/claim @$tok_c
+< 409
+err bad
+
+=== unknown task
+> GET /v1/t/999999999
+< 404
+err notfound
+
+=== bad state filter
+> GET /v1/t?s=weird
+< 400
+err bad
+
+=== title too long
+! repeat long x 161
+! set longtitle $long
+> POST /v1/t @$tok_c
+> {"title":"$longtitle"}
+< 400
+err bad

@@ -1,0 +1,5 @@
+print(0.1 + 0.2, string.format("%.2f", 0.1 + 0.2), 1 / 3, 10 / 4, 3 // 1.0)
+print(math.sqrt(2), string.format("%.5f", math.pi), math.floor(2.5), math.ceil(2.5), math.floor(-7.9), math.fmod(7, 3))
+print(string.format("%.1f %e %x %5.2f|%-5d|", 1234.5678, 0.000001234, 255, 3.14159, 42))
+print(1 / 0, -1 / 0, math.huge == 1 / 0, math.max(3, 9, -1), math.min(1, -2), math.abs(-3.5), 7 // 0.0)
+print(math.ult(1, -1), 3 == 3.0, math.type(3 / 1), tostring(10 // 3), 2 ^ 53 == 2 ^ 53 + 1)

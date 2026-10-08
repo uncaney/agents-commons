@@ -1,0 +1,90 @@
+{
+  "desc": "cx-goja: github.com/dop251/goja (ES5.1+). print/console.log to stdout; Date and Math.random ride a constant clock/rand source.",
+  "abi": "text",
+  "in": "{code,stdin} or NUL-split (15.4)",
+  "out": "program stdout; traceback + exit 1 on error",
+  "ms_hint": 10000,
+  "mb_hint": 32,
+  "tests": [
+    {
+      "in_text": "{\"code\":\"print(1 + 2 * 3)\",\"stdin\":\"\"}",
+      "out_sha256": "10159baf262b43a92d95db59dae1f72c645127301661e0a3ce4e38b295a97c58"
+    },
+    {
+      "in_text": "{\"code\":\"var s=0; for(var i=0;i\\u003c10;i++) s+=i; print(s)\",\"stdin\":\"\"}",
+      "out_sha256": "420002158111bff8adb3347d84029e480f45e60e1869b454b6adac3345f9f7d4"
+    },
+    {
+      "in_text": "{\"code\":\"print(Math.max(3, 7, 2))\",\"stdin\":\"\"}",
+      "out_sha256": "10159baf262b43a92d95db59dae1f72c645127301661e0a3ce4e38b295a97c58"
+    },
+    {
+      "in_text": "{\"code\":\"print(10 % 3)\",\"stdin\":\"\"}",
+      "out_sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "in_text": "{\"code\":\"print((0.1 + 0.2).toFixed(2))\",\"stdin\":\"\"}",
+      "out_sha256": "fcac13713bd0c03f05a9c01d2c059a4e337941610a791dea02decfed16eba0ed"
+    },
+    {
+      "in_text": "{\"code\":\"print(\\\"hello\\\".toUpperCase())\",\"stdin\":\"\"}",
+      "out_sha256": "3b09aeb6f5f5336beb205d7f720371bc927cd46c21922e334d47ba264acb5ba4"
+    },
+    {
+      "in_text": "{\"code\":\"print([\\\"a\\\",\\\"b\\\",\\\"c\\\"].join(\\\"-\\\"))\",\"stdin\":\"\"}",
+      "out_sha256": "661016e144928da1abc933ec351230f95761ec66d2a45f307e2a265f47abc0ab"
+    },
+    {
+      "in_text": "{\"code\":\"print(\\\"MixedCase\\\".toLowerCase())\",\"stdin\":\"\"}",
+      "out_sha256": "f13e60abc0786cd56d2c74afc1e406b236ccadcdf29cfada80034a8dff1a84f1"
+    },
+    {
+      "in_text": "{\"code\":\"print(\\\"starlight\\\".slice(0, 4))\",\"stdin\":\"\"}",
+      "out_sha256": "685b39f996eaa6f3918c4245da42279cec0d5500a44ceafffa930ee91007e74a"
+    },
+    {
+      "in_text": "{\"code\":\"print(stdin.trim())\",\"stdin\":\"  padded  \"}",
+      "out_sha256": "8a013f89d086584ab73fb4c46a120afe65941f43a2f1990075c272821112a363"
+    },
+    {
+      "in_text": "{\"code\":\"print(JSON.stringify({a: 1, b: [2, 3]}))\",\"stdin\":\"\"}",
+      "out_sha256": "06d1ac940bec12987f319657ce46130daa57ab2d831421ddb892eba6a4509692"
+    },
+    {
+      "in_text": "{\"code\":\"print(JSON.parse(\\\"[1,2,3]\\\")[2])\",\"stdin\":\"\"}",
+      "out_sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+    },
+    {
+      "in_text": "{\"code\":\"var o=JSON.parse('{\\\"x\\\":5}'); print(o.x * 2)\",\"stdin\":\"\"}",
+      "out_sha256": "917df3320d778ddbaa5c5c7742bc4046bf803c36ed2b050f30844ed206783469"
+    },
+    {
+      "in_text": "{\"code\":\"print(/\\\\d+/.test(\\\"abc123\\\"))\",\"stdin\":\"\"}",
+      "out_sha256": "a17fcf0a2f50e2d495e4f90ce263410edc183add6c62699a2facbccf60410f74"
+    },
+    {
+      "in_text": "{\"code\":\"print(\\\"2026-01-02\\\".match(/\\\\d{4}/)[0])\",\"stdin\":\"\"}",
+      "out_sha256": "7bd79c0161b0087185ccbc5cd44b0adc53d894e2eb2d57fc134fec2bad819427"
+    },
+    {
+      "in_text": "{\"code\":\"print(\\\"abcabc\\\".replace(/a/g, \\\"X\\\"))\",\"stdin\":\"\"}",
+      "out_sha256": "a0ca014722b696099ccbc25c86d6f21b15db44a12373df393f77b75f54c41030"
+    },
+    {
+      "in_text": "{\"code\":\"print(new Date(0).getUTCFullYear())\",\"stdin\":\"\"}",
+      "out_sha256": "ef353d7ddfa4e6a454d760a9d7cc167b04908507bdcae14e561282feb30f6360"
+    },
+    {
+      "in_text": "{\"code\":\"print(new Date().getUTCFullYear())\",\"stdin\":\"\"}",
+      "out_sha256": "7bd79c0161b0087185ccbc5cd44b0adc53d894e2eb2d57fc134fec2bad819427"
+    },
+    {
+      "in_text": "{\"code\":\"print(typeof Math.random())\",\"stdin\":\"\"}",
+      "out_sha256": "6d6f1adcd1e1ef897b5c352f40eea7233da6c10069009bf14cb6abb527efc599"
+    },
+    {
+      "in_text": "{\"code\":\"throw new Error(\\\"boom\\\")\",\"stdin\":\"\"}",
+      "out_sha256": "93adc32506648c186827a16d4a5989e49be07b64c2ffee24b7f3711e0efedf73"
+    }
+  ]
+}

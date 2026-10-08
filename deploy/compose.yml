@@ -1,0 +1,388 @@
+# agents.ekaii.fr server stack. See deploy/README.md.
+#
+# Networks: `data` and `edge` are internal (no Internet); only cloudflared sits on `egress`.
+# No service publishes a port; the only way in is the Cloudflare tunnel -> http://gateway:8080.
+# No docker.sock anywhere. Secrets are files under ./secrets (see secrets/README.md).
+name: commons
+
+x-hardened: &hardened
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+services:
+  postgres:
+    <<: *hardened
+    image: postgres:17-alpine
+    networks: [data]
+    environment:
+      POSTGRES_USER: cx
+      POSTGRES_DB: commons
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    secrets: [pg_password]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    read_only: true
+    tmpfs:
+      - /var/run/postgresql:size=16m,mode=1777
+      - /tmp:size=64m
+    shm_size: 128m
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    mem_limit: 512m
+    cpus: 1.5
+    # postgres gets the largest block-IO weight: it is the one component whose latency everything else
+    # waits on, so it wins disk bandwidth under contention.
+    blkio_config:
+      weight: 900
+    pids_limit: 200
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cx -d commons -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  forgejo:
+    <<: *hardened
+    # Pin the digest at deploy time:  docker pull codeberg.org/forgejo/forgejo:15 && docker inspect --format '{{index .RepoDigests 0}}' ...
+    # then replace the tag with  codeberg.org/forgejo/forgejo:15@sha256:<digest>
+    image: codeberg.org/forgejo/forgejo:15
+    networks: [data]
+    env_file: forgejo/forgejo.env
+    environment:
+      USER_UID: "1000"
+      USER_GID: "1000"
+    volumes:
+      - forgejo:/data
+    mem_limit: 512m
+    cpus: 0.75
+    blkio_config:
+      weight: 300
+    pids_limit: 256
+    cap_drop: [ALL]
+    # s6 entrypoint drops to git (1000); it needs these to fix /data ownership and switch user.
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  # One-shot: creates the gateway admin user + API token into the `tokens` volume (idempotent).
+  # Starts as root only to own the fresh volume, drops to git (1000, Forgejo refuses root) for
+  # init.sh, then opens the token to group 1000 which the gateway joins (group_add).
+  forgejo-init:
+    image: codeberg.org/forgejo/forgejo:15
+    restart: "no"
+    networks: [data]
+    depends_on:
+      forgejo:
+        condition: service_healthy
+    user: "0:0"
+    environment:
+      HOME: /data/git
+      USER: git
+      GITEA_CUSTOM: /data/gitea
+      GITEA_WORK_DIR: /data/gitea
+      FORGEJO_URL: http://forgejo:3000
+      TOKEN_FILE: /tokens/forgejo_token
+      RO_TOKEN_FILE: /tokens/forgejo_ro_token
+    entrypoint: ["/bin/sh", "-c"]
+    # init.sh mints both the read/write token and the read-only token (gitmirror). Open both to
+    # group 1000 (git) which the gateway joins via group_add.
+    command:
+      - chown 1000:1000 /tokens && su-exec 1000:1000 sh /init.sh && chmod 0640 /tokens/forgejo_token /tokens/forgejo_ro_token
+    volumes:
+      - forgejo:/data
+      - tokens:/tokens
+      - ./forgejo/init.sh:/init.sh:ro
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER, SETUID, SETGID, DAC_OVERRIDE]
+    mem_limit: 256m
+
+  gateway:
+    <<: *hardened
+    build:
+      context: ..
+      dockerfile: deploy/gateway/Dockerfile
+    image: ekaii/commons-gateway:latest
+    # `courier` carries the INTERNAL_LISTEN outbox server to the courier only (no postgres/forgejo,
+    # no cloudflared). `edge` reaches cloudflared; `data` reaches postgres/forgejo.
+    networks: [data, edge, courier]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      forgejo-init:
+        condition: service_completed_successfully
+    user: "65532:65532"
+    group_add: ["1000"]            # read /tokens/forgejo_token + forgejo_ro_token (0640, group git)
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid,nodev
+    cap_drop: [ALL]
+    mem_limit: 256m
+    cpus: 1.0
+    # weighted block IO: the gateway yields disk bandwidth to postgres under contention (10..1000).
+    blkio_config:
+      weight: 500
+    pids_limit: 128
+    volumes:
+      - blobs:/data
+      - tokens:/tokens:ro
+    secrets:
+      - server_secret
+      - admin_token
+      - pg_password
+      - courier_token
+      - edge_secret
+      - poll_token
+      - ops_token
+      - check_token
+      - server_sign_key
+      - server_online_cert
+    environment:
+      LISTEN: ":8080"
+      INTERNAL_LISTEN: ":8081"      # courier-facing outbox server (bearer COURIER_TOKEN), never public
+      METRICS_LISTEN: ":9090"       # OpenMetrics, scraped over the data network only
+      # password-less URL; the binary injects the secret via core.ApplyPasswordFile (PG_PASSWORD_FILE)
+      DATABASE_URL: postgres://cx@postgres:5432/commons?sslmode=disable
+      PG_PASSWORD_FILE: /run/secrets/pg_password
+      DATA_DIR: /data
+      SEED_WASM_DIR: /seed          # baked into the image by the Dockerfile seed stage
+      SERVER_SECRET_FILE: /run/secrets/server_secret
+      ADMIN_TOKEN_FILE: /run/secrets/admin_token
+      # bearer tokens for the operator and courier planes (empty file => that plane answers 401)
+      POLL_TOKEN_FILE: /run/secrets/poll_token
+      OPS_TOKEN_FILE: /run/secrets/ops_token
+      CHECK_TOKEN_FILE: /run/secrets/check_token
+      COURIER_TOKEN_FILE: /run/secrets/courier_token
+      EDGE_SECRET_FILE: /run/secrets/edge_secret
+      FORGEJO_URL: http://forgejo:3000
+      FORGEJO_TOKEN_FILE: /tokens/forgejo_token
+      POW_BITS: "22"
+      TRUST_CF: "1"                # only cloudflared can reach us, so CF-Connecting-IP is trustworthy
+      TRUST_ASN: "0"              # no ASN datamark unless the operator ships an ASN table
+      PUBLIC_URL: https://agents.ekaii.fr
+      ABUSE_CONTACT: abuse@ekaii.fr
+      # content licence + legal publisher surfaced on /legal, /export manifests and page footers
+      LICENSE_CONTENT: CC0-1.0
+      LEGAL_PUBLISHER: ekaii
+      LEGAL_JURISDICTION: FR
+      ORIGIN_RETENTION_DAYS: "30"
+      # storage budget: the sum of the class caps must fit DISK_BUDGET (core.CheckBudget at boot)
+      PG_MAX_BYTES: 8G
+      DISK_BUDGET: 64G
+      # sealed lane (E2EE, SECURITY-E2EE-v2 9): defaults on; the server never holds a plaintext
+      E2E_MAX_BYTES: 64K
+      E2E_STAMP_BITS: "20"
+      E2E_BATCH_HOURS: "1"
+      SERVER_SIGN_KEY_FILE: /run/secrets/server_sign_key
+      SERVER_ROOT_PUB: ""           # set to the published root public key once minted
+      SERVER_ONLINE_CERT_FILE: /run/secrets/server_online_cert
+      WITNESS_PUBS: ""              # comma-separated witness public keys (key log cosigners)
+      GOMEMLIMIT: 200MiB
+      UMAMI_SRC: ""            # set to your Umami script URL to enable analytics
+      UMAMI_ID: ""             # your Umami website id
+    healthcheck:
+      # distroless has no shell: the binary must implement `-healthcheck` (GET http://127.0.0.1:8080/healthz, exit 1 on failure)
+      test: ["CMD", "/gateway", "-healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  cloudflared:
+    <<: *hardened
+    # Verify the tag exists and pin its digest at deploy:  docker pull cloudflare/cloudflared:2025.9.1
+    image: cloudflare/cloudflared:2025.9.1
+    networks: [edge, egress]
+    depends_on: [gateway]
+    # `--token-file` (tunnel run) reads the connector token from a file so it never appears in
+    # `docker inspect`; it exists since cloudflared 2024.3. On an older build, drop the flag and set
+    # the env var TUNNEL_TOKEN_FILE=/run/secrets/tunnel_token instead (same effect).
+    command: ["tunnel", "--no-autoupdate", "--metrics", "127.0.0.1:2000", "run", "--token-file", "/run/secrets/tunnel_token"]
+    secrets: [tunnel_token]
+    user: "65532:65532"            # image is distroless nonroot already; made explicit
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    cap_drop: [ALL]
+    mem_limit: 128m
+    pids_limit: 64
+
+  # Courier: the ONLY component with Internet egress (SPEC-v2 20, 24.1). It sits on `courier`
+  # (reaching the gateway's :8081 outbox) and `egress` (the Internet), never on `data` or `edge`.
+  # It polls http://gateway:8081 with the courier bearer, performs the allow-listed side effects
+  # (IndexNow, libmeta, cf_purge, mirror ships, OSV/EOL/wayback fetches, WAL ship) and acks results.
+  courier:
+    <<: *hardened
+    build:
+      context: ..
+      dockerfile: deploy/courier/Dockerfile
+    image: ekaii/commons-courier:latest
+    networks: [courier, egress]
+    depends_on:
+      gateway:
+        condition: service_healthy
+    user: "65532:65532"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid,nodev   # heartbeat file only
+    cap_drop: [ALL]
+    mem_limit: 64m
+    cpus: 0.25
+    blkio_config:
+      weight: 100
+    pids_limit: 32
+    # One secret file per kind; unused ones may be empty files (compose needs them to exist).
+    secrets: [courier_token, hf_token, cf_token, cf_kv_token, bing_api_key, wal_pub]
+    volumes:
+      - ./backups:/backups:ro             # read by backup_ship / wal_ship, never written
+    environment:
+      INTERNAL_URL: http://gateway:8081   # outbox routes (bearer)
+      GATEWAY_URL: http://gateway:8080    # public mux over the courier network (export files)
+      PUBLIC_URL: https://agents.ekaii.fr # fallback until /internal/config answers
+      COURIER_TOKEN_FILE: /run/secrets/courier_token
+      SECRETS_DIR: /run/secrets
+      # Every kind is opt-in. rev3 kinds (kv_mirror, botkeys, bing_content, osv, eol, wayback,
+      # wal_ship) come with their packages; enable the ones whose secrets are filled.
+      EGRESS_KINDS: indexnow,libmeta,cf_purge,osv,eol,wayback
+      HF_REPO: ""                         # owner/dataset on huggingface.co, required by kind hf
+      CF_ZONE_ID: ""                      # 32-hex Cloudflare zone id, required by kind cf_purge
+      S3_ENDPOINT: ""                     # adds its host to the allowlist (backup_ship, wal_ship)
+      POLL_WAIT: "55"
+      GOMEMLIMIT: 48MiB
+    healthcheck:
+      test: ["CMD", "/courier", "-healthcheck"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Edge: optional 5 MB internal reverse proxy for blue/green cutovers (SPEC-v2 1, cmd/edge). It
+  # preserves the inbound Host and only forwards to the live gateway. Off unless the `bluegreen`
+  # profile is selected:  docker compose --profile bluegreen up -d edge
+  edge:
+    <<: *hardened
+    profiles: ["bluegreen"]
+    build:
+      context: ..
+      dockerfile: deploy/gateway/Dockerfile
+      target: build
+    image: ekaii/commons-gateway:latest
+    entrypoint: ["/edge"]
+    networks: [edge]
+    depends_on: [gateway]
+    user: "65532:65532"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid,nodev
+    cap_drop: [ALL]
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 32
+    environment:
+      EDGE_LISTEN: ":8080"
+      # cmd/edge reads the live upstream from this file and reloads it on SIGHUP; the operator writes
+      # the active colour's URL here at cutover (e.g. http://gateway:8080). Mount it read-only:
+      #   volumes: [ ./ops/edge-upstream:/etc/edge/upstream:ro ]
+      EDGE_UPSTREAM_FILE: /etc/edge/upstream
+
+  backup:
+    <<: *hardened
+    build: ./backup
+    image: ekaii/commons-backup:latest
+    # uid 1000 = forgejo's git user (reads its volume) = host owner of ./backups; no extra caps
+    user: "1000:1000"
+    networks: [data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: cx
+      PGDATABASE: commons
+      PG_PASSWORD_FILE: /run/secrets/pg_password
+      KEEP: "28"
+      INTERVAL: "21600"
+      WITH_BLOBS: "0"              # blobs are ephemeral (7-day TTL) and owned by the gateway uid
+    # the recipient is public, but keeping it in secrets/ keeps all deploy inputs in one place
+    entrypoint: ["/bin/sh", "-c", "AGE_RECIPIENT=$(cat /run/secrets/age_recipient) exec /usr/local/bin/backup.sh"]
+    secrets: [pg_password, age_recipient]
+    volumes:
+      - forgejo:/src/forgejo:ro
+      - ./backups:/backups
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m             # holds the pg_dump before it is streamed
+    cap_drop: [ALL]
+    mem_limit: 256m
+    pids_limit: 64
+
+networks:
+  data:
+    internal: true
+  edge:
+    internal: true
+  # courier reaches only the gateway's :8081 outbox and the Internet-facing courier; it is internal
+  # so nothing on it can be reached from outside, and postgres/forgejo are never on it.
+  courier:
+    internal: true
+  egress: {}
+
+volumes:
+  # pgdata and blobs hold the only growing state. Give each a filesystem quota on the host so a
+  # runaway table or blob flood cannot fill the disk out from under the other services, e.g. an
+  # XFS project quota or a dedicated ZFS dataset with a `quota` property; PG_MAX_BYTES / DISK_BUDGET
+  # bound the application's own accounting, this is the hard floor under it.
+  pgdata: {}     # quota at the host (e.g. 12G): postgres data + WAL
+  forgejo: {}
+  blobs: {}      # quota at the host (e.g. 6G): compute blobs + catalog modules (7-day TTL)
+  tokens: {}
+
+secrets:
+  pg_password:
+    file: ./secrets/pg_password.txt
+  server_secret:
+    file: ./secrets/server_secret.txt
+  admin_token:
+    file: ./secrets/admin_token.txt
+  tunnel_token:
+    file: ./secrets/tunnel_token.txt
+  age_recipient:
+    file: ./secrets/age_recipient.txt
+  # operator + courier planes (empty file => that plane answers 401)
+  poll_token:
+    file: ./secrets/poll_token.txt
+  ops_token:
+    file: ./secrets/ops_token.txt
+  check_token:
+    file: ./secrets/check_token.txt
+  courier_token:
+    file: ./secrets/courier_token.txt
+  edge_secret:
+    file: ./secrets/edge_secret.txt
+  # sealed-lane signing (E2EE key log / online cert); empty until minted
+  server_sign_key:
+    file: ./secrets/server_sign_key.txt
+  server_online_cert:
+    file: ./secrets/server_online_cert.txt
+  # courier per-kind credentials (empty files are fine for disabled kinds)
+  hf_token:
+    file: ./secrets/hf_token.txt
+  cf_token:
+    file: ./secrets/cf_token.txt
+  cf_kv_token:
+    file: ./secrets/cf_kv_token.txt
+  bing_api_key:
+    file: ./secrets/bing_api_key.txt
+  wal_pub:
+    file: ./secrets/wal_pub.txt

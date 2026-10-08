@@ -1,0 +1,39 @@
+// Single-threaded stand-in for <thread> on wasm32-wasi (libc++ there is built without
+// threads and #errors on the real header). Binaryen's ThreadPool asks hardware_concurrency()
+// first and creates no std::thread when it is 1, so the constructor is never reached; it
+// aborts loudly if it ever is. Picked up through -I shim ahead of the system headers.
+#ifndef CX_SHIM_THREAD
+#define CX_SHIM_THREAD
+#include <cstdlib>
+#include <functional>
+#include <ostream>
+
+namespace std {
+class thread {
+public:
+  class id {
+  public:
+    unsigned v = 1;
+    bool operator==(const id& o) const { return v == o.v; }
+    bool operator!=(const id& o) const { return v != o.v; }
+    bool operator<(const id& o) const { return v < o.v; }
+  };
+  thread() noexcept {}
+  template <class F, class... Args> explicit thread(F&&, Args&&...) { abort(); }
+  thread(const thread&) = delete;
+  thread(thread&&) noexcept {}
+  ~thread() {}
+  thread& operator=(thread&&) noexcept { return *this; }
+  bool joinable() const noexcept { return false; }
+  void join() {}
+  void detach() {}
+  id get_id() const noexcept { return id(); }
+  static unsigned hardware_concurrency() noexcept { return 1; }
+};
+inline std::ostream& operator<<(std::ostream& os, const thread::id& i) { return os << i.v; }
+namespace this_thread {
+inline thread::id get_id() noexcept { return thread::id(); }
+inline void yield() noexcept {}
+}  // namespace this_thread
+}  // namespace std
+#endif

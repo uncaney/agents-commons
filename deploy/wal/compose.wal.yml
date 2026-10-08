@@ -1,0 +1,103 @@
+# Continuous WAL archiving overlay (P121, SPEC-v2 27.9). Enable it alongside the base stack:
+#
+#   docker compose -f deploy/compose.yml -f deploy/wal/compose.wal.yml up -d
+#
+# It turns on Postgres WAL archiving onto the shared `walspool` volume, mounts that volume into the
+# courier (which ships each segment encrypted to the backup bucket and deletes it), and adds a weekly
+# pg_basebackup sidecar. The courier only needs the public key (secret wal_pub) and S3_ENDPOINT /
+# S3_BUCKET / s3_key set; the private key and the read token stay on the operator box (see README.md).
+#
+# Give `walspool` a 2 GiB host quota (ZFS dataset or loop image) exactly like pgdata; the courier's
+# 90 % watermark raises freeze:write before it can fill, but the hard floor belongs at the host.
+
+services:
+  postgres:
+    # archive_mode writes each completed segment to /wal via a plain cp that refuses to overwrite.
+    # archive_timeout forces a segment switch every 60 s so an idle cluster still ships a bounded RPO.
+    command:
+      - postgres
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=test ! -f /wal/%f && cp %p /wal/%f
+      - -c
+      - archive_timeout=60
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=4
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - walspool:/wal
+
+  courier:
+    # wal_ship buffers a whole file in memory to seal it, so give the courier room for one WAL segment
+    # (16 MiB) plus the largest basebackup tarball you expect; raise these if basebackups are large.
+    mem_limit: 256m
+    volumes:
+      - ./backups:/backups:ro
+      - walspool:/wal
+    environment:
+      EGRESS_KINDS: indexnow,libmeta,cf_purge,osv,eol,wayback,wal_ship
+      WAL_DIR: /wal
+      WAL_SPOOL_BYTES: "2147483648" # 2 GiB; must match the walspool host quota
+      GOMEMLIMIT: 224MiB
+      # S3_ENDPOINT / S3_BUCKET must be set (here or in the base file) and secret s3_key filled.
+
+  # Weekly base backup: a streamed, gzipped tar written atomically into /wal/basebackup/ under a name
+  # the courier ships (leading-dot .part files are skipped until the mv). -X none is safe because the
+  # WAL needed to make the backup consistent is itself archived and shipped continuously.
+  wal-basebackup:
+    image: postgres:17-alpine
+    networks: [data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: cx
+      PGDATABASE: commons
+      INTERVAL: "604800" # weekly
+    secrets: [pg_password]
+    volumes:
+      - walspool:/wal
+    entrypoint: ["/bin/sh", "-c"]
+    # NB: every shell $ is doubled ($$) so compose passes it through literally instead of interpolating
+    # it at config time; the container shell expands the real values.
+    command:
+      - |
+        set -eu
+        umask 077
+        printf 'postgres:5432:*:cx:%s\n' "$$(cat /run/secrets/pg_password)" > /tmp/.pgpass
+        chmod 600 /tmp/.pgpass
+        export PGPASSFILE=/tmp/.pgpass
+        mkdir -p /wal/basebackup
+        while true; do
+          ts=$$(date -u +%Y%m%dT%H%M%SZ)
+          tmp="/wal/basebackup/.base-$$ts.tgz.part"
+          out="/wal/basebackup/base-$$ts.tgz"
+          if pg_basebackup -h "$$PGHOST" -U "$$PGUSER" -Ft -X none -D - | gzip -c > "$$tmp"; then
+            mv "$$tmp" "$$out"
+            echo "basebackup $$out $$(wc -c < "$$out") bytes"
+          else
+            rm -f "$$tmp"; echo "basebackup failed" >&2
+          fi
+          # Local basebackups older than 14 days are already encrypted off-box; prune them.
+          find /wal/basebackup -maxdepth 1 -name 'base-*.tgz' -mtime +14 -delete || true
+          sleep "$$INTERVAL"
+        done
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    cap_drop: [ALL]
+    mem_limit: 128m
+    pids_limit: 64
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  # 2 GiB host quota, same discipline as pgdata. Owned so that Postgres (writes), the basebackup
+  # sidecar (writes) and the courier (reads + deletes) can all use it; see README.md for the chmod.
+  walspool: {}

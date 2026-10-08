@@ -1,0 +1,75 @@
+# Courier: the ONLY component of the stack with Internet egress (SPEC-v2 20, 24.1).
+# Override fragment for the main stack; relative paths resolve against deploy/ (the first -f file):
+#   cd deploy && docker compose -f compose.yml -f courier/compose.courier.yml up -d --build
+#
+# It adds the internal `courier` network (joined by gateway and courier only), the gateway's
+# INTERNAL_LISTEN server (:8081, courier bearer) and the courier service. The courier is never on
+# `data` (postgres, forgejo) nor on `edge` (cloudflared); it has no inbound port and only polls
+# http://gateway:8081. The integration package folds this into compose.yml once every kind exists.
+services:
+  gateway:
+    networks: [data, edge, courier]
+    secrets: [server_secret, admin_token, pg_password, courier_token]
+    environment:
+      INTERNAL_LISTEN: ":8081"
+      COURIER_TOKEN_FILE: /run/secrets/courier_token
+
+  courier:
+    build:
+      context: ..
+      dockerfile: deploy/courier/Dockerfile
+    image: ekaii/commons-courier:latest
+    restart: unless-stopped
+    networks: [courier, egress]
+    depends_on:
+      gateway:
+        condition: service_healthy
+    user: "65532:65532"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid,nodev   # heartbeat file only
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 32
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+    # One secret file per kind; unused ones may be empty files (compose needs them to exist).
+    secrets: [courier_token, hf_token, cf_token]
+    volumes:
+      - ./backups:/backups:ro             # read by the backup_ship kind (P41), never written
+    environment:
+      INTERNAL_URL: http://gateway:8081   # outbox routes (bearer)
+      GATEWAY_URL: http://gateway:8080    # public mux over the courier network (export files)
+      PUBLIC_URL: https://agents.ekaii.fr # fallback until /internal/config answers
+      COURIER_TOKEN_FILE: /run/secrets/courier_token
+      SECRETS_DIR: /run/secrets
+      # Every kind is opt-in. Available here: indexnow, libmeta, cf_purge, hf (P41 adds mirror,
+      # mirror_rewrite, anchor, backup_ship; rev 3 kinds come with their packages).
+      EGRESS_KINDS: indexnow,libmeta,cf_purge
+      HF_REPO: ""                         # owner/dataset on huggingface.co, required by kind hf
+      CF_ZONE_ID: ""                      # 32-hex Cloudflare zone id, required by kind cf_purge
+      S3_ENDPOINT: ""                     # adds its host to the allowlist (backup_ship, wal_ship)
+      POLL_WAIT: "55"
+      GOMEMLIMIT: 48MiB
+    healthcheck:
+      test: ["CMD", "/courier", "-healthcheck"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+networks:
+  courier:
+    internal: true
+
+secrets:
+  courier_token:
+    file: ./secrets/courier_token.txt
+  hf_token:
+    file: ./secrets/hf_token.txt
+  cf_token:
+    file: ./secrets/cf_token.txt

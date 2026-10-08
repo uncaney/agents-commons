@@ -1,0 +1,73 @@
+# Blue/green override (SPEC-v2 21.3). Always combined with the base file:
+#   docker compose -f compose.yml -f ops/compose.bluegreen.yml --profile bluegreen <cmd>
+# Adds three services: `edge` (the internal reverse proxy cloudflared targets instead of
+# gateway:8080), `gateway-next` (the second colour, identical to gateway except for its image) and
+# `canary` (one-shot journey runner). Which colour is live is whatever ops/edge/upstream names;
+# deploy/ops/deploy.sh flips it with SIGHUP and records each colour's image in ops/edge/image.<colour>.
+services:
+  gateway:
+    image: ${GATEWAY_IMAGE:-ekaii/commons-gateway:latest}
+
+  gateway-next:
+    extends:
+      file: compose.yml
+      service: gateway
+    image: ${GATEWAY_NEXT_IMAGE:-ekaii/commons-gateway:latest}
+    profiles: [bluegreen]
+
+  edge:
+    build:
+      context: ..
+      dockerfile: deploy/ops/edge.Dockerfile
+    image: ekaii/commons-edge:latest
+    restart: unless-stopped
+    profiles: [bluegreen]
+    networks: [edge]
+    environment:
+      EDGE_LISTEN: ":8090"
+      EDGE_UPSTREAM_FILE: /etc/edge/upstream
+    volumes:
+      # The DIRECTORY is mounted (not the file): deploy.sh replaces the file atomically (tmp + mv)
+      # inside it, which a file bind mount would not see.
+      - ./ops/edge:/etc/edge:ro
+    user: "65532:65532"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  canary:
+    build:
+      context: ..
+      dockerfile: deploy/ops/canary.Dockerfile
+    image: ekaii/commons-canary:latest
+    restart: "no"
+    profiles: [bluegreen]
+    networks: [edge]
+    environment:
+      URL: ${CANARY_URL:-http://gateway-next:8080}
+      CANARY_STATE: /state
+      CANARY_TEST: ${CANARY_TEST:-0}
+      CANARY_QUICK: ${CANARY_QUICK:-0}
+      CANARY_SKIP: ${CANARY_SKIP:-}
+      KUMA_PUSH_URL: ${KUMA_PUSH_URL:-}
+    volumes:
+      - canary-state:/state
+    user: "65532:65532"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    mem_limit: 64m
+    pids_limit: 64
+
+volumes:
+  canary-state: {}

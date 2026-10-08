@@ -1,0 +1,26 @@
+// Single-threaded stand-in for <condition_variable> on wasm32-wasi (see shim/thread). With
+// one thread a wait whose predicate is false could never be satisfied, so it aborts instead
+// of hanging; binaryen only waits for worker threads it never creates here.
+#ifndef CX_SHIM_CONDITION_VARIABLE
+#define CX_SHIM_CONDITION_VARIABLE
+#include <cstdlib>
+#include <mutex>
+
+namespace std {
+enum class cv_status { no_timeout, timeout };
+class condition_variable {
+public:
+  constexpr condition_variable() noexcept {}
+  condition_variable(const condition_variable&) = delete;
+  void notify_one() noexcept {}
+  void notify_all() noexcept {}
+  template <class L> void wait(L&) { abort(); }
+  template <class L, class P> void wait(L&, P pred) {
+    if (!pred()) abort();
+  }
+  template <class L, class D> cv_status wait_for(L&, const D&) { return cv_status::timeout; }
+  template <class L, class D, class P> bool wait_for(L&, const D&, P pred) { return pred(); }
+};
+class condition_variable_any : public condition_variable {};
+}  // namespace std
+#endif

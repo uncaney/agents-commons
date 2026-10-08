@@ -1,0 +1,30 @@
+{
+ "desc": "UUID check and deterministic v3/v4/v5 generation",
+ "usage": "check <uuid> -> valid version=N variant=rfc4122 | invalid <reason>; v4 <seed> (sha256-derived, deterministic); v5 <dns|url|oid|x500|uuid> <name>; v3 ...; nil",
+ "abi": "text",
+ "in": "check <uuid> | v4 <seed> | v5 <ns> <name> | v3 <ns> <name> | nil",
+ "out": "one line",
+ "examples": [
+  {
+   "in": "v5 dns example.com",
+   "out": "cfbff0d1-9375-5685-968c-48ce8b15ae17"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "tests": [
+  {
+   "in_text": "check 123e4567-e89b-42d3-a456-426614174000",
+   "out_sha256": "3c087d97b7aa6df7462846ec15ed729274e456fb08c9b407d10417df2a8edfb6"
+  },
+  {
+   "in_text": "v5 dns example.com",
+   "out_sha256": "84188e897a2df9ce534f5f042137f08350b84e728d1dca33277292e403c760e1"
+  },
+  {
+   "in_text": "nil",
+   "out_sha256": "2b26811a985aeb82c6ed3250a0c174caab1be3e494d038766254f4ad88263f1e"
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+print(("hello world"):gsub("o", "0"))
+print(("a1b22c333"):gsub("%d+", function(d) return "[" .. #d .. "]" end))
+print(("2026-01-15"):gsub("(%d+)-(%d+)-(%d+)", "%3/%2/%1"))
+print((("  many   spaces  here "):gsub("%s+", " ")):match("^%s*(.-)%s*$"))
+print(("camelCaseString"):gsub("%u", function(c) return "_" .. c:lower() end))
+print(("snake_case_here"):gsub("_(%w)", string.upper))
+print(("x"):gsub("y", "z"), ("abc"):gsub("", "."), ("hello"):gsub("l", "L", 1))

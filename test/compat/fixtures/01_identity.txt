@@ -1,0 +1,114 @@
+-- v1 identity session (SPEC.md: Identity & auth) replayed as raw HTTP: the challenge/register
+-- shape, me, subkey + revoke, JSON twins and the `err <code> <detail>` line format. v2 appends
+-- fields after the v1 ones (challenge: for=; register: recovery= license= aup=; me: lvl= ipclass=
+-- …), which the prefix comparison ignores. This is the fixture TestNegativePrefixLogicRemoved
+-- replays byte-for-byte to show the suite fails without the prefix rule.
+
+=== challenge
+> POST /v1/challenge
+< 200
+c=$c bits=$bits:int exp=$exp:int
+
+=== solve the proof of work locally
+! solve nonce c bits
+
+=== register
+> POST /v1/register
+> {"c":"$c","nonce":"$nonce","name":"compat-sub"}
+< 201
+id=$sub:id token=$tok_sub:token credits=100
+
+=== a challenge is single-use
+> POST /v1/register
+> {"c":"$c","nonce":"$nonce","name":"compat-sub2"}
+< 400
+err pow
+
+=== a forged challenge is refused
+> POST /v1/register
+> {"c":"not-a-challenge","nonce":"1","name":"compat-x"}
+< 400
+err pow
+
+=== second challenge
+> POST /v1/challenge
+< 200
+c=$c2 bits=$bits2:int exp=$exp2:int
+
+=== solve
+! solve nonce2 c2 bits2
+
+=== a bad name is refused before the challenge is consumed
+> POST /v1/register
+> {"c":"$c2","nonce":"$nonce2","name":"bad name!"}
+< 400
+err bad
+
+=== register a second root with it
+> POST /v1/register
+> {"c":"$c2","nonce":"$nonce2","name":"compat-two"}
+< 201
+id=$two:id token=$tok_two:token credits=100
+
+=== me
+> GET /v1/me @$tok_sub
+< 200
+id=$sub name=compat-sub root=$sub credits=100 rep=0 exp=never
+
+=== me as JSON (v1 fields kept, new ones added)
+> GET /v1/me?f=json @$tok_sub
+< 200 json
+{"id":"$sub","name":"compat-sub","root":"$sub","credits":100,"rep":0}
+
+=== me without a token
+> GET /v1/me
+< 401
+err auth
+
+=== me with a garbage token
+> GET /v1/me
+> Authorization: Bearer cx_nope
+< 401
+err auth
+
+=== JSON error shape
+> GET /v1/me?f=json
+< 401 json
+{"err":"auth"}
+
+=== subkey (credits move from the caller)
+> POST /v1/subkey @$tok_sub
+> {"name":"child","credits":10,"ttl_h":24}
+< 201
+id=$child:id token=$tok_child:token credits=10 exp=$cexp:date
+
+=== child identity
+> GET /v1/me @$tok_child
+< 200
+id=$child name=child root=$sub credits=10 rep=0 exp=$cexp
+
+=== parent after the transfer
+> GET /v1/me @$tok_sub
+< 200
+id=$sub name=compat-sub root=$sub credits=90 rep=0 exp=never
+
+=== subkey ttl is capped
+> POST /v1/subkey @$tok_sub
+> {"name":"child","credits":0,"ttl_h":9999}
+< 400
+err bad
+
+=== revoke the subkey
+> DELETE /v1/subkey/$child @$tok_sub
+< 200
+ok
+
+=== revoked token is dead
+> GET /v1/me @$tok_child
+< 401
+err auth
+
+=== revoking a stranger is not found
+> DELETE /v1/subkey/azzzzzz @$tok_sub
+< 404
+err notfound

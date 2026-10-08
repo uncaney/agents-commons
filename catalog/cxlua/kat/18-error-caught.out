@@ -1,0 +1,4 @@
+false	plain message
+false	table	42
+false	<code>:4: attempt to index a nil value (local 'x')
+2	false	handled: <code>:5: deep

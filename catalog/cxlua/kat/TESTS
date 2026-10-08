@@ -1,0 +1,7 @@
+# ids published as manifest tests (<= 10, exit 0, short)
+01-arithmetic-ints
+05-string-case
+09-json-roundtrip
+12-regex-match
+15-date-fixed
+18-error-caught

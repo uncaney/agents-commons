@@ -1,0 +1,195 @@
+{
+ "name": "cxs1",
+ "description": "Symmetric lane (E2EE 7.4): locator = SHAKE256(\"cx1/loc\"||0x00||secret, 16); k_enc||k_mac = SHAKE256(\"cx1/key\"||0x00||secret, 64); wtoken = HMAC(k_mac, \"cx1/d-write\"); ct = pt xor SHAKE256(k_enc||s, len); tag = HMAC(k_mac, \"cxs1\"||0x00||s||locator||ct); record = \"cxs1\"||s||ct||tag; text form cxs1:\u003cb64url\u003e. Sealed memory values (SPEC-v2 26.4): k_v = HKDF(mk, \"cx-seal-v1\"); seal1:\u003cb64url(nonce12||AES-256-GCM(k_v, pt, aad))\u003e; seal2:\u003cb64url(nonce16||ct||tag32)\u003e with ct = pt xor HMAC(k_v, nonce||u32 counter) blocks and tag = HMAC(HKDF(k_v,\"mac\"||aad), nonce||ct), aad = ns|k binding the value to its key.",
+ "vectors": [
+  {
+   "secret": "6bfae61431f05adba7d87d956566f3bd6bc8af011a4c932d",
+   "locator": "31fb35a7800be1162c17b411399fce55",
+   "k_enc": "c88c6f1ec43c50051bf6b3786b72ae24ae02e7cd1584f45851e8e3189bb994b6",
+   "k_mac": "8bcdd12ccda4353c5513e34e49e78c0ae8d4b84d66f4b5092a2fe0db997571f1",
+   "wtoken": "18c65366eabe4afe8c4fc4597f086f5e77f471f47ef454fdf5a33a052f85e9d3",
+   "s": "7d7f6ccc1cbe59b218758abed69700ee1a1b07b43b6f6f89c28cb53b4e3d4e16",
+   "pt": "",
+   "record": "637873317d7f6ccc1cbe59b218758abed69700ee1a1b07b43b6f6f89c28cb53b4e3d4e1622f2f8ed094920e0fa54d1448d06dd8fc1ea735fc56adf2f9d4e34608c06d33d",
+   "text": "cxs1:Y3hzMX1_bMwcvlmyGHWKvtaXAO4aGwe0O29vicKMtTtOPU4WIvL47QlJIOD6VNFEjQbdj8Hqc1_Fat8vnU40YIwG0z0"
+  },
+  {
+   "secret": "56776a4e73510ca3edd7b228df4e95efb773f3447ce9323c",
+   "locator": "23f153a441abad98b5e2d88b82914787",
+   "k_enc": "c6d5a4e627021e7b34a502a10c496d74cb86b1286a8d7d6c0caf8a242b6643ae",
+   "k_mac": "5d8c7b20663121888a82fb6dd26fe68d71b5c1d0663316d173862ae6a5274a40",
+   "wtoken": "dfc53d33c21fff4e02e133d5f9beb61b8de0f2585595a44e0000b56775e4ea4a",
+   "s": "a07706a21d101519039cda685397167b4fc8f19514c5668d7f1647f2ea8c52de",
+   "pt": "67a195126a8c9e",
+   "record": "63787331a07706a21d101519039cda685397167b4fc8f19514c5668d7f1647f2ea8c52dee3447f1da7349bb3e57d5077d3ffe1e196ac786aa551cb2dd261bdc49830f140de36c40ea248a9",
+   "text": "cxs1:Y3hzMaB3BqIdEBUZA5zaaFOXFntPyPGVFMVmjX8WR_LqjFLe40R_Hac0m7PlfVB30__h4ZaseGqlUcst0mG9xJgw8UDeNsQOokip"
+  },
+  {
+   "secret": "888f668f152e1f83a20e333901e0b495a84dbb1c173c4be1",
+   "locator": "e8e0a5b96a418b61d6bb7131d145576d",
+   "k_enc": "9ff30ace42d88fc84227250d8d1166f7f3f7016778adf6afc814b3e8acb0a4ca",
+   "k_mac": "7ec9a2c628d621b8994072fd126704c410e226335bf9e1329848863db65da40a",
+   "wtoken": "75ded6a724ac351d71597c059fa50dfc12f45ba3cf83aa2619d59153fa1a0b38",
+   "s": "e8d920f810eac9fc6285d0f84d1725fbfde741a6716b0ff6f773e37fbb7e60a3",
+   "pt": "3bf82a5ebf30d55974ed6557a217680f8dc5ebb6eea29e4c45136716633b5139ff8f7984ff96c84d612ca1495d52b929f90fa0fe1442b1fd4163965aa148c65e38f8055628697831a6bf432ec9f07efc3eef7ce306bcb1f76a70218224b8318544df3aa4",
+   "record": "63787331e8d920f810eac9fc6285d0f84d1725fbfde741a6716b0ff6f773e37fbb7e60a37041a00c3dc38ec232378bc15b30e789bfa4bb6475fa51268db27bdeadf7e28532aae96b656a742623b8d28d0271e6b7e8b1515e3b2e700c6c24407f2b53c376585dfbb8223e256c46a583a010f398d1ecf185099b4348da546541d973d8cf0fc3af489a0585c72adc28ca4904467b48a70353c517718b56bf6b4b35f768df836aa6dc45",
+   "text": "cxs1:Y3hzMejZIPgQ6sn8YoXQ-E0XJfv950GmcWsP9vdz43-7fmCjcEGgDD3DjsIyN4vBWzDnib-ku2R1-lEmjbJ73q334oUyqulrZWp0JiO40o0Ccea36LFRXjsucAxsJEB_K1PDdlhd-7giPiVsRqWDoBDzmNHs8YUJm0NI2lRlQdlz2M8Pw69ImgWFxyrcKMpJBEZ7SKcDU8UXcYtWv2tLNfdo34NqptxF"
+  }
+ ],
+ "seal1": [
+  {
+   "mk": "0b3e78f149a93b59805278a9da3569599af46244e34c30f7d03551b60e0eefdf",
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "nonce": "bfb12b927e49ebc677dd8aab",
+   "aad": "u:aalice2|k|todo",
+   "pt": "756557aca957d526ae64",
+   "value": "seal1:v7Erkn5J68Z33YqrH6110nWZlrESvp8KmnbP6AgKXbyz2sIaJwg"
+  },
+  {
+   "mk": "0b3e78f149a93b59805278a9da3569599af46244e34c30f7d03551b60e0eefdf",
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "nonce": "b150cca11bbb35fb763153c2",
+   "aad": "cp|checkpoint-3",
+   "pt": "db30d1918154fe241bdf81830717808055d14277",
+   "value": "seal1:sVDMoRu7Nft2MVPCdkfQdUeQUbWVhPtPv0oHxIU3PaTafPwf-t7Ro5jf2NxvrFuU"
+  },
+  {
+   "mk": "0b3e78f149a93b59805278a9da3569599af46244e34c30f7d03551b60e0eefdf",
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "nonce": "a69ef38a0c24e0edc44bf35b",
+   "aad": "note|plan",
+   "pt": "ae236557470dedd87cea1f7b69afe98a5e9e4647903441c1fae3915d2520",
+   "value": "seal1:pp7zigwk4O3ES_Nb0Z7WeZGYcoArPdvwoOhDVXI3MeRAdApDm4CiC0EpveKQXe-bHuYBI4R2ajEEKw"
+  }
+ ],
+ "seal2": [
+  {
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "k_mac": "5725555bf379ba21f7992e976f349ddeaa12278038437ba239b57ed06aa50a97",
+   "nonce": "96e20760f6953c4581a99d84b3106d12",
+   "aad": "u:aalice2|kv|count",
+   "pt": "",
+   "value": "seal2:luIHYPaVPEWBqZ2EsxBtEgNYHjxls80UqJbvTF82cbihLE4SCQaE2d9EgKPHnokj"
+  },
+  {
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "k_mac": "41f79d052e76c35f5ebadb24007afb9151ff129e6445e4a971d89338e8c7cd4a",
+   "nonce": "46911f2f95ce54957bf3155081ce1e19",
+   "aad": "u:aalice2|kv|note",
+   "pt": "6359913e3202cf9204ec70cdc21955df5577833f5354e4572b03d4cbbced70",
+   "value": "seal2:RpEfL5XOVJV78xVQgc4eGeO8NX2mlh7PsX_HTPBI7ygbCf75dAPtolobYf9hD2rKrASw1JIGMgF-WbPlMgbLj-pELBbWXXD_2fRgt5BdAw"
+  },
+  {
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "k_mac": "492922aebbf2824246b1be3426fe6c6c83312ad2684cd8eca29c640b454a28e5",
+   "nonce": "2a85a05618a7a1a96197a0e92420fbe2",
+   "aad": "cp|checkpoint-3",
+   "pt": "3f0b2771b29df9e81ac1a44d1edd91b5e696230e5fe6412e737217bad4615676",
+   "value": "seal2:KoWgVhinoalhl6DpJCD74vFwGLIroRXG-Fx1Zk40UdVkwDE2rZmdDjFcaDyhey5pb0dhnyFKajCxfSeeJAgp9mC0aWw32ayDF9r91MQHuQM"
+  },
+  {
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "k_mac": "1792aa64472bc453e9acc0654722279b44856ebc3efa5bac9eb34157b11f3b94",
+   "nonce": "44fbb57097cf5e7f4baf27d05a784805",
+   "aad": "note|plan",
+   "pt": "578e8a34c6f2a3d2aadebb08bc59ce16f681adfe97235f08637c65aac369df86c59bd959fe481489744128f924006f7fe0f69c494f6a8e6848b1961cc10a4c0ef1e981f7c69de114c8c4d8d0df20081bca55b6d6f2b51d194703801479a890bd4d4186e7",
+   "value": "seal2:RPu1cJfPXn9LryfQWnhIBSitFuLsjlb1D7oUIIIP67JX0ybwB4kwl4lB0SgQ2YhKDhp9hEcT8ZP716YU43i55eCRC7USefeYSW6xIoGJfh0nDzAMUMAQxoPNXHBKYLltuyO_lD9XyIhkOPq-pixUw40oqmJf_psuNAs2DyC0vSQdoLaHJQqjDAzup1kU6t3kftPzdQ"
+  }
+ ],
+ "negative": [
+  {
+   "kind": "cxs1",
+   "what": "tag flipped",
+   "secret": "56776a4e73510ca3edd7b228df4e95efb773f3447ce9323c",
+   "input": "63787331a07706a21d101519039cda685397167b4fc8f19514c5668d7f1647f2ea8c52dee3447f1da7349bb3e57d5077d3ffe1e196ac786aa551cb2dd261bdc49830f140de36c40ea248a8"
+  },
+  {
+   "kind": "cxs1",
+   "what": "ciphertext flipped",
+   "secret": "56776a4e73510ca3edd7b228df4e95efb773f3447ce9323c",
+   "input": "63787331a07706a21d101519039cda685397167b4fc8f19514c5668d7f1647f2ea8c52dee3447f1da6349bb3e57d5077d3ffe1e196ac786aa551cb2dd261bdc49830f140de36c40ea248a9"
+  },
+  {
+   "kind": "cxs1",
+   "what": "wrong secret",
+   "secret": "8a6806b6dad43fde80d70794e4724bf91313e79cf5502efc",
+   "input": "63787331a07706a21d101519039cda685397167b4fc8f19514c5668d7f1647f2ea8c52dee3447f1da7349bb3e57d5077d3ffe1e196ac786aa551cb2dd261bdc49830f140de36c40ea248a9"
+  },
+  {
+   "kind": "cxs1",
+   "what": "truncated",
+   "secret": "56776a4e73510ca3edd7b228df4e95efb773f3447ce9323c",
+   "input": "63787331a07706a21d101519039cda685397167b4fc8f19514c5668d7f1647f2ea8c52dee3447f1da7349bb3e57d5077d3ffe1e196ac786aa551cb2dd261bdc49830f1"
+  },
+  {
+   "kind": "cxs1",
+   "what": "record of another locator (secret of vector 0)",
+   "secret": "6bfae61431f05adba7d87d956566f3bd6bc8af011a4c932d",
+   "input": "63787331a07706a21d101519039cda685397167b4fc8f19514c5668d7f1647f2ea8c52dee3447f1da7349bb3e57d5077d3ffe1e196ac786aa551cb2dd261bdc49830f140de36c40ea248a9"
+  },
+  {
+   "kind": "seal1",
+   "what": "tampered seal1",
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "aad": "u:aalice2|k|todo",
+   "input": "seal1:v7Erkn5J68Z33YqrH6110nWZlrESvp8KmnbP6AgKXbyz2sIaJwA"
+  },
+  {
+   "kind": "seal1",
+   "what": "seal1 under another key name",
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "aad": "u:aalice2|k|todox",
+   "input": "seal1:v7Erkn5J68Z33YqrH6110nWZlrESvp8KmnbP6AgKXbyz2sIaJwg"
+  },
+  {
+   "kind": "seal1",
+   "what": "seal2 value opened as seal1",
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "aad": "u:aalice2|k|todo",
+   "input": "seal2:RpEfL5XOVJV78xVQgc4eGeO8NX2mlh7PsX_HTPBI7ygbCf75dAPtolobYf9hD2rKrASw1JIGMgF-WbPlMgbLj-pELBbWXXD_2fRgt5BdAw"
+  },
+  {
+   "kind": "seal2",
+   "what": "tampered seal2",
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "aad": "u:aalice2|kv|note",
+   "input": "seal2:RpEfL5XOVJV78xVQgc4eGeO8NX2mlh7PsX_HTPBI7ygbCf75dAPtolobYf9hD2rKrASw1JIGMgF-WbPlMgbLj-pELBbWXXD_2fRgt5BdAA"
+  },
+  {
+   "kind": "seal2",
+   "what": "seal2 under another k_v",
+   "k_v": "8557f3627cf06850029b06e67f89acdad5089b70979e8942d199fac219950d72",
+   "aad": "u:aalice2|kv|note",
+   "input": "seal2:RpEfL5XOVJV78xVQgc4eGeO8NX2mlh7PsX_HTPBI7ygbCf75dAPtolobYf9hD2rKrASw1JIGMgF-WbPlMgbLj-pELBbWXXD_2fRgt5BdAw"
+  },
+  {
+   "kind": "seal2",
+   "what": "seal2 under another key name (aad bound into the tag key, Security Review 2 #11)",
+   "k_v": "61bb5790974dea457135980410267aa8f0d1618f0a26dfbe30687517039ea1f6",
+   "aad": "u:aalice2|kv|notex",
+   "input": "seal2:RpEfL5XOVJV78xVQgc4eGeO8NX2mlh7PsX_HTPBI7ygbCf75dAPtolobYf9hD2rKrASw1JIGMgF-WbPlMgbLj-pELBbWXXD_2fRgt5BdAw"
+  },
+  {
+   "kind": "nonce-reuse",
+   "what": "two seal1 values sharing a nonce are refused (err bad nonce reuse)",
+   "a": "seal1:v7Erkn5J68Z33YqrH6110nWZlrESvp8KmnbP6AgKXbyz2sIaJwg",
+   "b": "seal1:v7Erkn5J68Z33YqrHPqFjK8wAt8E3XKXNheLf08N"
+  },
+  {
+   "kind": "nonce-reuse",
+   "what": "two seal2 values sharing a nonce",
+   "a": "seal2:RpEfL5XOVJV78xVQgc4eGeO8NX2mlh7PsX_HTPBI7ygbCf75dAPtolobYf9hD2rKrASw1JIGMgF-WbPlMgbLj-pELBbWXXD_2fRgt5BdAw",
+   "b": "seal2:RpEfL5XOVJV78xVQgc4eGfbXqH-onD3uF21L9xM_ejidpm5dzp0P-u7LvLFerBMBm0k"
+  },
+  {
+   "kind": "not-sealed",
+   "what": "regex ^seal[12]:[A-Za-z0-9_-]+$ rejects a padded or spaced value",
+   "input": "seal1:v7Erkn5J68Z33YqrH6110nWZlrESvp8KmnbP6AgKXbyz2sIaJwg=="
+  },
+  {
+   "kind": "not-sealed",
+   "what": "seal3 is not a format",
+   "input": "seal3:AAAA"
+  }
+ ]
+}

@@ -1,0 +1,228 @@
+-- v1 compute session (SPEC.md: Compute, Worker): blobs (raw in, raw out), jobs (text and JSON),
+-- the worker lease/done JSON shapes and 2-replica consensus. Blob replies gain exp= kind=, submit
+-- replies gain eta/probation lines, lease replies gain upgrade/sunset: all ignored.
+
+! join sub
+! join w1
+! join w2
+! randword r 12
+! wasm mod $r
+! sha256 wasm $mod
+! text input hello agents $r
+! sha256 in $input
+
+=== upload the module (raw bytes in, hash line out)
+> POST /v1/b @$tok_sub
+>var mod
+< 200
+$wasm
+
+=== upload the input as JSON
+> POST /v1/b @$tok_sub
+> Accept: application/json
+>var input
+< 200 json
+{"hash":"$in"}
+
+=== re-upload of an existing hash
+> POST /v1/b @$tok_sub
+>var input
+< 200
+$in
+
+=== blob upload needs a token
+> POST /v1/b
+>var input
+< 401
+err auth
+
+=== download is raw and byte-identical
+> GET /v1/b/$wasm @$tok_sub
+< 200 raw
+<h Content-Type: application/octet-stream
+|var mod
+
+=== HEAD
+> HEAD /v1/b/$wasm @$tok_sub
+< 200
+<h ETag
+
+=== no anonymous file hosting
+> GET /v1/b/$wasm
+< 401
+err auth
+
+=== donors come online (nothing queued yet)
+> POST /v1/w/lease?wait=0 @$tok_w1
+> {"max_ms":30000,"max_mb":256}
+< 204
+
+=== second donor online
+> POST /v1/w/lease?wait=0 @$tok_w2
+> {"max_ms":30000,"max_mb":256}
+< 204
+
+=== submit a job (one id per line)
+> POST /v1/j @$tok_sub
+> {"wasm":"$wasm","in":"$in","ms":1000,"mb":64}
+< 200|202
+$job:id
+
+=== a missing blob is refused
+> POST /v1/j @$tok_sub
+> {"wasm":"$wasm","in":"0000000000000000000000000000000000000000000000000000000000000000","ms":1000}
+< 404
+err notfound
+
+=== status: queued
+> GET /v1/j/$job @$tok_sub
+< 200
+$job queued
+
+=== only the submitter root may read a job
+> GET /v1/j/$job @$tok_w1
+< 404
+err notfound
+
+=== lease by the first donor (v1 JSON in/out)
+> POST /v1/w/lease?wait=0 @$tok_w1
+> {"max_ms":30000,"max_mb":256}
+< 200 json
+{"lease":"$l1","job":"$job","wasm":"$wasm","in":"$in","ms":1000,"mb":64,"deadline":"$dl1:int"}
+
+=== a root never holds two replicas of one job
+> POST /v1/w/lease?wait=0 @$tok_w1
+> {"max_ms":30000,"max_mb":256}
+< 204
+
+=== lease by the second donor
+> POST /v1/w/lease?wait=0 @$tok_w2
+> {"max_ms":30000,"max_mb":256}
+< 200 json
+{"lease":"$l2","job":"$job","wasm":"$wasm","in":"$in","ms":1000,"mb":64,"deadline":"$dl2:int"}
+
+=== status: running
+> GET /v1/j/$job @$tok_sub
+< 200
+$job running
+
+=== a donor downloads the job input
+> GET /v1/b/$in @$tok_w1
+< 200 raw
+|var input
+
+=== the first donor uploads its output
+! text output HELLO AGENTS $r
+! sha256 out $output
+> POST /v1/b @$tok_w1
+>var output
+< 200
+$out
+
+=== first report
+> POST /v1/w/done @$tok_w1
+> {"lease":"$l1","status":"ok","out":"$out","code":0,"ms":120}
+< 200 json
+{"ok":true}
+
+=== still running after one report
+> GET /v1/j/$job @$tok_sub
+< 200
+$job running
+
+=== second report, same fingerprint
+> POST /v1/w/done @$tok_w2
+> {"lease":"$l2","status":"ok","out":"$out","code":0,"ms":100}
+< 200 json
+{"ok":true}
+
+=== a lease cannot be reported twice
+> POST /v1/w/done @$tok_w2
+> {"lease":"$l2","status":"ok","out":"$out","code":0,"ms":100}
+< 404
+err notfound
+
+=== done
+> GET /v1/j/$job?wait=5 @$tok_sub
+< 200
+$job done out=$out ms=120
+
+=== done as JSON
+> GET /v1/j/$job @$tok_sub
+> Accept: application/json
+< 200 json
+{"id":"$job","status":"done","out":"$out","ms":120}
+
+=== the submitter reads the output
+> GET /v1/b/$out @$tok_sub
+< 200 raw
+|var output
+
+=== upload a second input
+! text input2 second input $r
+! sha256 in2 $input2
+> POST /v1/b @$tok_sub
+>var input2
+< 200
+$in2
+
+=== batch submit (one id per line)
+> POST /v1/j @$tok_sub
+> {"jobs":[{"wasm":"$wasm","in":"$in2","ms":1000},{"wasm":"$wasm","in":"$in2","ms":2000}]}
+< 200|202
+$j1:id
+$j2:id
+
+=== cancel the first (v2 route, keeps the queue clean for later fixtures)
+> DELETE /v1/j/$j1 @$tok_sub
+< 200
+$j1 cancelled
+
+=== cancel the second
+> DELETE /v1/j/$j2 @$tok_sub
+< 200
+$j2 cancelled
+
+=== a subkey without credits
+> POST /v1/subkey @$tok_sub
+> {"name":"poor","credits":0}
+< 201
+id=$poor:id token=$tok_poor:token credits=0
+
+=== a job needs credits
+> POST /v1/j @$tok_poor
+> {"wasm":"$wasm","in":"$in","ms":1000,"mb":32}
+< 402
+err credits
+
+=== bad spec
+> POST /v1/j @$tok_sub
+> {"wasm":"nope","in":"$in"}
+< 400
+err bad
+
+=== upload something that is not a module
+! text junk not wasm at all $r
+! sha256 junk_h $junk
+> POST /v1/b @$tok_sub
+>var junk
+< 200
+$junk_h
+
+=== not a wasm module
+> POST /v1/j @$tok_sub
+> {"wasm":"$junk_h","in":"$in","ms":1000}
+< 400
+err bad
+
+=== lease needs a token
+> POST /v1/w/lease?wait=0
+> {"max_ms":30000,"max_mb":256}
+< 401
+err auth
+
+=== done needs a real lease
+> POST /v1/w/done @$tok_w1
+> {"lease":"lnope","status":"ok","out":"$out","code":0,"ms":1}
+< 404
+err notfound

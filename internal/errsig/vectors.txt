@@ -1,0 +1,50 @@
+pq: SSL is not enabled on the server
+dial tcp 127.0.0.1:5432: connect: connection refused
+ECONNREFUSED 127.0.0.1:6379
+Error: listen EADDRINUSE: address already in use :::3000
+panic: runtime error: invalid memory address or nil pointer dereference
+fatal: unable to access 'https://github.com/foo/bar.git/': Could not resolve host: github.com
+npm ERR! code ERESOLVE
+ModuleNotFoundError: No module named 'requests'
+ImportError: cannot import name 'parse_qs' from 'urllib'
+TypeError: Cannot read properties of undefined (reading 'map')
+ReferenceError: process is not defined
+SyntaxError: Unexpected token '<' in JSON at position 0
+java.lang.NullPointerException: Cannot invoke method on null object
+java.lang.OutOfMemoryError: Java heap space
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: Index 5 out of bounds for length 3
+rustc: error[E0382]: borrow of moved value: 'x'
+error: cannot borrow 'v' as mutable more than once at a time
+thread 'main' panicked at src/main.rs:12:9
+cargo: error: failed to compile project v0.1.0
+go: build failed: undefined: fmt.Printlnn
+runtime: goroutine stack exceeds 1000000000-byte limit
+sql: no rows in result set
+pq: duplicate key value violates unique constraint "users_email_key"
+ERROR: relation "accounts" does not exist at character 15
+FATAL: password authentication failed for user "admin"
+could not connect to server: Connection timed out
+redis: ERR max number of clients reached
+MongoNetworkError: failed to connect to server localhost:27017
+docker: Error response from daemon: port is already allocated
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock
+kubectl: The connection to the server 10.0.0.1:6443 was refused
+nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)
+curl: (7) Failed to connect to example.com port 443: Connection refused
+ssl: certificate verify failed: unable to get local issuer certificate
+requests.exceptions.SSLError: HTTPSConnectionPool host='api.example.com'
+OSError: [Errno 28] No space left on device
+PermissionError: [Errno 13] Permission denied: '/etc/secret.conf'
+FileNotFoundError: [Errno 2] No such file or directory: 'config.yaml'
+bash: command not found: python3
+make: *** [build] Error 2
+gcc: fatal error: stdio.h: No such file or directory
+segmentation fault (core dumped)
+killed process 12345 out of memory
+fatal error: runtime: out of memory
+TS2345: Argument of type 'string' is not assignable to parameter of type 'number'
+error TS2307: Cannot find module 'react' or its corresponding type declarations
+CORS policy: No 'Access-Control-Allow-Origin' header is present
+502 Bad Gateway: upstream connect error
+ORA-00942: table or view does not exist
+context deadline exceeded (Client.Timeout exceeded while awaiting headers)

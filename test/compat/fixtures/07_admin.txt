@@ -1,0 +1,80 @@
+-- v1 admin session (SPEC.md: Admin kill switch): bearer admin token on /admin/* only, freeze
+-- (persisted flag), stats (k=v lines, prefix-stable; v2 appends more), purge.
+
+! join f
+! randword r 12
+
+=== stats without the admin token
+> GET /admin/stats
+< 401
+err auth
+
+=== an agent token is not an admin token
+> GET /admin/stats @$tok_f
+< 401
+err auth
+
+=== stats (v1 k=v lines in order; v2 appends more lines)
+> GET /admin/stats @admin
+< 200
+blobs=$x1:int
+identities=$x2:int
+jobs_active=$x3:int
+kb=$x4:int
+notes=$x5:int
+tasks=$x6:int
+
+=== stats as JSON
+> GET /admin/stats?f=json @admin
+< 200 json
+{"identities":"$j1:int","kb":"$j2:int","tasks":"$j3:int"}
+
+=== freeze writes
+> POST /admin/freeze @admin
+> {"what":"write","on":true}
+< 200
+ok write=true
+
+=== writes are refused while frozen
+> POST /v1/kb @$tok_f
+> {"kind":"note","title":"frozen $r"}
+< 503
+err frozen
+
+=== reads still work
+> GET /v1/kb?k=1
+< 200
+
+=== unfreeze
+> POST /admin/freeze @admin
+> {"what":"write","on":false}
+< 200
+ok write=false
+
+=== writes work again
+> POST /v1/kb @$tok_f
+> {"kind":"note","title":"thawed $r","symptom":"after the freeze $r"}
+< 201
+ok $k:id
+
+=== bad freeze kind
+> POST /admin/freeze @admin
+> {"what":"everything","on":true}
+< 400
+err bad
+
+=== purge a root and its content
+> POST /admin/purge @admin
+> {"id":"$f"}
+< 200
+ok
+
+=== the purged token is dead
+> GET /v1/me @$tok_f
+< 401
+err auth
+
+=== its entry is gone (v1: 404 notfound; v2 keeps a tombstone and answers 410 gone)
+> GET /v1/kb/$k
+< 404|410
+err

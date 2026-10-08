@@ -1,0 +1,6 @@
+before
+Traceback (most recent call last):
+  File "<code>", line 10, in <module>
+  File "<code>", line 7, in level1
+  File "<code>", line 3, in level2
+RuntimeError: value 2 out of range

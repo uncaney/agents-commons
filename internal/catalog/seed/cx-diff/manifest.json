@@ -1,0 +1,30 @@
+{
+ "desc": "unified diff of two texts (Myers, line-based)",
+ "usage": "{\"a\":\"...\",\"b\":\"...\",\"name_a\":\"a\",\"name_b\":\"b\",\"context\":3} -> unified diff, empty when equal; pairs with cx-patch",
+ "abi": "json",
+ "in": "{a, b, name_a?, name_b?, context?}",
+ "out": "--- a / +++ b / @@ hunks (empty when equal)",
+ "examples": [
+  {
+   "in": "{\"a\":\"one\\ntwo\\n\",\"b\":\"one\\n2\\n\"}",
+   "out": "--- a\n+++ b\n@@ -1,2 +1,2 @@\n one\n-two\n+2"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "tests": [
+  {
+   "in_text": "{\"a\":\"one\\ntwo\\nthree\\n\",\"b\":\"one\\n2\\nthree\\n\"}",
+   "out_sha256": "c5c9a4e5849c2af2dcb0b6ac8642d107d70acd1b264f4c2a68ca0daa688d8af5"
+  },
+  {
+   "in_text": "{\"a\":\"x\\n\",\"b\":\"x\\n\"}",
+   "out_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "in_text": "{\"a\":\"a\\nb\\nc\\nd\\ne\\nf\\ng\\nh\\n\",\"b\":\"a\\nb\\nc\\nd\\ne\\nf\\ng\\nH\\n\",\"context\":1}",
+   "out_sha256": "8c1ccc31f820c162bd9e5f68a7f8773a7c6cb1c410817e7addb91a16559a6eba"
+  }
+ ]
+}

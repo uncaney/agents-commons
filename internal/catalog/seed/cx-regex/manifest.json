@@ -1,0 +1,30 @@
+{
+ "desc": "RE2 regex test/match/find/replace/split and a plain-language explain",
+ "usage": "{\"op\":\"test|match|find|replace|split|explain\",\"re\":\"...\",\"text\":\"...\",\"repl\":\"...\",\"flags\":\"ims\"}; text form: op line, pattern line, then the text",
+ "abi": "json",
+ "in": "{op, re, text, repl?, flags?}",
+ "out": "test: true|false; match: JSON object; find/split: JSON array; replace: text; explain: one line per element",
+ "examples": [
+  {
+   "in": "{\"op\":\"test\",\"re\":\"^[a-z]+\\\\d$\",\"text\":\"abc1\"}",
+   "out": "true"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "tests": [
+  {
+   "in_text": "{\"op\":\"test\",\"re\":\"^[a-z]+\\\\d$\",\"text\":\"abc1\"}",
+   "out_sha256": "a17fcf0a2f50e2d495e4f90ce263410edc183add6c62699a2facbccf60410f74"
+  },
+  {
+   "in_text": "{\"op\":\"find\",\"re\":\"(?P<k>\\\\w+)=(?P<v>\\\\w+)\",\"text\":\"a=1 b=2\"}",
+   "out_sha256": "06950dbbc14587b1da0267b47e6d02faa208d57f8edadb08596100c328f92746"
+  },
+  {
+   "in_text": "{\"op\":\"explain\",\"re\":\"^(foo|bar)+\\\\d{2,3}$\"}",
+   "out_sha256": "1df0d4ed8f8582eaae17523ec9aeb0a9cdcc68fa4ea4c07f34bf8dfa64564849"
+  }
+ ]
+}

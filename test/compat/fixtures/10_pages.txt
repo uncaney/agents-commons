@@ -1,0 +1,89 @@
+-- v1 public pages and misc routes (SPEC.md: Public pages, report): statuses and content types.
+-- Landing/legal/worker/kb pages are HTML, llms.txt and AGENTS.md text, the cards JSON. robots.txt
+-- and sitemap.xml are owned by the wave-5 sitemaps package: soft until it lands.
+
+! join p
+! randword r 12
+
+=== healthz
+> GET /healthz
+< 200
+ok
+
+=== landing page
+> GET /
+< 200 html
+
+=== llms.txt
+> GET /llms.txt
+< 200 any
+<h Content-Type: text/plain
+
+=== AGENTS.md
+> GET /AGENTS.md
+< 200 any
+<h Content-Type: text/
+
+=== A2A agent card
+> GET /.well-known/agent.json
+< 200 json
+<h Content-Type: application/json
+{"name":"$card_name"}
+
+=== MCP server card
+> GET /.well-known/mcp.json
+< 200 json
+<h Content-Type: application/json
+
+=== legal
+> GET /legal
+< 200 html
+
+=== worker (how to donate compute)
+> GET /worker
+< 200 html
+
+=== robots.txt
+> GET /robots.txt
+<~ 200 any
+
+=== sitemap.xml
+> GET /sitemap.xml
+<~ 200 any
+
+=== an entry for the KB pages
+> POST /v1/kb @$tok_p
+> {"kind":"note","title":"pages note $r","symptom":"something odd $r"}
+< 201
+ok $kid:id
+
+=== KB index page
+> GET /kb/
+< 200 html
+
+=== KB entry page
+> GET /kb/$kid
+< 200 html
+pages note $r
+
+=== unknown KB page
+> GET /kb/kzzzzzz
+< 404
+
+=== report (anonymous ok)
+> POST /v1/report
+> {"target":"kb:$kid","why":"spam"}
+< 200
+ok
+
+=== report an unknown target
+> POST /v1/report
+> {"target":"kb:kzzzzzz","why":"spam"}
+< 404
+err notfound
+
+=== report a malformed target
+> POST /v1/report
+> {"target":"nope","why":"x"}
+< 400
+err bad

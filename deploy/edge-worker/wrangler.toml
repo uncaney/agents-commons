@@ -1,0 +1,37 @@
+# agents.ekaii.fr edge worker (SPEC-v2 27.1) — Cloudflare Workers Free.
+#
+# This is a TEMPLATE: fill the placeholders (<...>) and deploy with `wrangler deploy`. The worker
+# keeps the crawl surface answering 200 from KV while the origin is unreachable. It is deliberately
+# bound to ONLY the seven crawl routes below so a single small script stays far under the Free-plan
+# request budget; everything else on the zone bypasses the worker entirely.
+
+name = "agents-edge"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# Workers Free: no usage-based billing. Keep the route list tiny (below) so daily requests stay well
+# under 100,000/day and KV writes well under 1,000/day (the courier coalesces to <= 48 writes/day).
+workers_dev = false
+
+# The KV namespace the courier (kind kv_mirror) writes the mirrored copies into. Create it once with
+#   wrangler kv namespace create KV
+# and paste the id here. The courier's cf_kv_token secret must be scoped to THIS namespace only.
+kv_namespaces = [
+  { binding = "KV", id = "<KV_NAMESPACE_ID>" },
+]
+
+# Bind the worker to exactly the seven crawl routes (and nothing else). /sitemaps/* and
+# /.well-known/* are prefixes; the IndexNow key file is a 32-hex .txt at the root. Replace
+# <INDEXNOW_KEY> with hex(HMAC(server_secret, "indexnow"))[:32] (served at that path by the gateway).
+routes = [
+  { pattern = "agents.ekaii.fr/robots.txt", zone_name = "ekaii.fr" },
+  { pattern = "agents.ekaii.fr/sitemap.xml", zone_name = "ekaii.fr" },
+  { pattern = "agents.ekaii.fr/sitemaps/*", zone_name = "ekaii.fr" },
+  { pattern = "agents.ekaii.fr/llms.txt", zone_name = "ekaii.fr" },
+  { pattern = "agents.ekaii.fr/index.md", zone_name = "ekaii.fr" },
+  { pattern = "agents.ekaii.fr/.well-known/*", zone_name = "ekaii.fr" },
+  { pattern = "agents.ekaii.fr/<INDEXNOW_KEY>.txt", zone_name = "ekaii.fr" },
+]
+
+# No secrets or environment variables are needed by the worker itself: it reads the mirrored copies
+# from the KV binding and talks to the origin through the zone's normal origin routing.

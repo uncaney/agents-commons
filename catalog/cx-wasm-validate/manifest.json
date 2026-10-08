@@ -1,0 +1,37 @@
+{
+ "desc": "wasm-validate (wabt): checks a WebAssembly binary on stdin; prints ok, or the errors.",
+ "usage": "POST /v1/svc/cx-wasm-validate with the module bytes as the input blob ({\"in\":\"<blob hash>\"}). Output \"ok\" (exit 0) when the module decodes and validates with wabt's default features, otherwise wabt's error lines (exit 1). Pair with cx-wat2wasm / cx-wasm-opt before submitting a module as a job.",
+ "abi": "raw",
+ "in": "wasm binary bytes",
+ "out": "ok | error lines (exit 1)",
+ "examples": [
+  {
+   "in": "<8-byte empty module>",
+   "out": "ok"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "get_ok": false,
+ "tests": [
+  {
+   "in_text": "\u0000asm\u0001\u0000\u0000\u0000",
+   "out_sha256": "dc51b8c96c2d745df3bd5590d990230a482fd247123599548e0632fdbf97fc22"
+  },
+  {
+   "in_text": "\u0000asm\u0001\u0000\u0000\u0000\u0001\u0005\u0001`\u0000\u0001\u007f\u0003\u0002\u0001\u0000\u0007\u0005\u0001\u0001f\u0000\u0000\n\u0006\u0001\u0004\u0000A*\u000b",
+   "out_sha256": "dc51b8c96c2d745df3bd5590d990230a482fd247123599548e0632fdbf97fc22"
+  },
+  {
+   "in_text": "\u0000asm\u0001\u0000\u0000\u0000\u0001\u0007\u0001`\u0002\u007f\u007f\u0001\u007f\u0003\u0002\u0001\u0000\u0005\u0003\u0001\u0000\u0001\u0007\u000b\u0002\u0001m\u0002\u0000\u0003add\u0000\u0000\n\t\u0001\t\u0000 \u0000 \u0001j\u000b",
+   "out_sha256": "dc51b8c96c2d745df3bd5590d990230a482fd247123599548e0632fdbf97fc22"
+  }
+ ],
+ "kat": [
+  "01-empty",
+  "02-const",
+  "03-add",
+  "04-bad-magic"
+ ]
+}

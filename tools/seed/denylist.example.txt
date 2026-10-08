@@ -1,0 +1,22 @@
+# Operator denylist FORMAT SAMPLE with placeholder values (SPEC-v2 22.3).
+# Copy to $CX_SEED_DIR/denylist.txt and replace every line with your own values; that file is
+# gitignored and must never be committed. The gate reports hits as "denylist" / "denylist.re"
+# classes only, never the matched text.
+#
+# Plain line  = exact token, matched case-insensitively on word boundaries (spaces allowed).
+# re:<regex>  = RE2 regex matched against the normalised entry text (lower-cased and as written).
+#
+# hostnames and device names
+my-hostname
+my-nas
+homelab-example
+# people
+Jane Doe
+# employer, products, projects, customers
+example-employer
+project-codename
+re:(?i)\bexample-?corp\b
+# domains you own or operate
+re:(?i)\b[a-z0-9-]+\.example-home\.net\b
+# tunnel / tenant / account identifiers (UUID placeholder)
+re:\b00000000-0000-4000-8000-000000000000\b

@@ -1,0 +1,67 @@
+{
+ "name": "state",
+ "description": "Sealed state blob (E2EE 7.2): 0x01 | s[32] | AES-256-GCM(k = HKDF(k_state, salt = s, info, 32), 0^12, aad = info, pt) with info = \"cx1/state\" || 0x00 || id || u64(ver); kind 6 receipt sha256(id || u64(ver) || sha256(blob)).",
+ "vectors": [
+  {
+   "seed": "1b11013cf07bc1761759d4dbd980f1a56aaa400ed803ed3dee1c62333655a76e",
+   "k_state": "dcf7778d305f5e9d088473f1f49f8d1c053b09d38959cc9212db1809fcc08639",
+   "id": "aalice2",
+   "ver": 1,
+   "s": "adf7e10855d8a864fee995e0f15f7d271dcf9f4b309d1fe8320bad35d48206b1",
+   "info": "6378312f73746174650061616c696365320000000000000001",
+   "key": "ca58c6fda89633f3b264f764d5f81cb5bb75b21d3d858edfbcda103977b2ac57",
+   "pt": "7b7d",
+   "blob": "01adf7e10855d8a864fee995e0f15f7d271dcf9f4b309d1fe8320bad35d48206b1204ec2c2066eff472e2c1a8a8212245fa0d4",
+   "receipt": "d5e2693108e18bf65e896bf74e1cba85621a1ef9d732236f657c4407d072069c"
+  },
+  {
+   "seed": "1b11013cf07bc1761759d4dbd980f1a56aaa400ed803ed3dee1c62333655a76e",
+   "k_state": "dcf7778d305f5e9d088473f1f49f8d1c053b09d38959cc9212db1809fcc08639",
+   "id": "aalice2",
+   "ver": 2,
+   "s": "bbafb1c324d0b728ce441b4e26fe4473ccf0063f9f6349a698b21054e2e36a7c",
+   "info": "6378312f73746174650061616c696365320000000000000002",
+   "key": "fe136aff021cdbabc54e19eacf47dbf0bb58a78c8f3e0a15867f68fd4a477a80",
+   "pt": "7b2270696e73223a7b2261626f62626f62223a7b226670223a226162222c22736571223a322c226373223a322c226c656166223a372c22706f6c223a317d7d2c22637572736f72223a39397d",
+   "blob": "01bbafb1c324d0b728ce441b4e26fe4473ccf0063f9f6349a698b21054e2e36a7c42fdeb87e514499bfdf9beea11a6808462390d7c06c59774e7f5a41968ecbf1629cd6d08be88b8a5a695f6a43b85e7a31d5a3755585829caa059dffbe3b1f0c36b1f5b30b60ad12cfc9b19cdf000f6f1bd4a8a42714c237decd0ddc6",
+   "receipt": "cf462ffafec7ab024089c84fe0d9dd948fc93a694040de630bb37fb58a1ac997"
+  }
+ ],
+ "negative": [
+  {
+   "what": "blob of version 2 served as version 3 (rollback or replay across versions)",
+   "k_state": "dcf7778d305f5e9d088473f1f49f8d1c053b09d38959cc9212db1809fcc08639",
+   "id": "aalice2",
+   "ver": 3,
+   "blob": "01bbafb1c324d0b728ce441b4e26fe4473ccf0063f9f6349a698b21054e2e36a7c42fdeb87e514499bfdf9beea11a6808462390d7c06c59774e7f5a41968ecbf1629cd6d08be88b8a5a695f6a43b85e7a31d5a3755585829caa059dffbe3b1f0c36b1f5b30b60ad12cfc9b19cdf000f6f1bd4a8a42714c237decd0ddc6"
+  },
+  {
+   "what": "blob served for another id",
+   "k_state": "dcf7778d305f5e9d088473f1f49f8d1c053b09d38959cc9212db1809fcc08639",
+   "id": "abobbob",
+   "ver": 2,
+   "blob": "01bbafb1c324d0b728ce441b4e26fe4473ccf0063f9f6349a698b21054e2e36a7c42fdeb87e514499bfdf9beea11a6808462390d7c06c59774e7f5a41968ecbf1629cd6d08be88b8a5a695f6a43b85e7a31d5a3755585829caa059dffbe3b1f0c36b1f5b30b60ad12cfc9b19cdf000f6f1bd4a8a42714c237decd0ddc6"
+  },
+  {
+   "what": "tampered ciphertext",
+   "k_state": "dcf7778d305f5e9d088473f1f49f8d1c053b09d38959cc9212db1809fcc08639",
+   "id": "aalice2",
+   "ver": 2,
+   "blob": "01bbafb1c324d0b728ce441b4e26fe4473ccf0063f9f6349a698b21054e2e36a7c42fdeb87e514499afdf9beea11a6808462390d7c06c59774e7f5a41968ecbf1629cd6d08be88b8a5a695f6a43b85e7a31d5a3755585829caa059dffbe3b1f0c36b1f5b30b60ad12cfc9b19cdf000f6f1bd4a8a42714c237decd0ddc6"
+  },
+  {
+   "what": "wrong version byte",
+   "k_state": "dcf7778d305f5e9d088473f1f49f8d1c053b09d38959cc9212db1809fcc08639",
+   "id": "aalice2",
+   "ver": 2,
+   "blob": "02bbafb1c324d0b728ce441b4e26fe4473ccf0063f9f6349a698b21054e2e36a7c42fdeb87e514499bfdf9beea11a6808462390d7c06c59774e7f5a41968ecbf1629cd6d08be88b8a5a695f6a43b85e7a31d5a3755585829caa059dffbe3b1f0c36b1f5b30b60ad12cfc9b19cdf000f6f1bd4a8a42714c237decd0ddc6"
+  },
+  {
+   "what": "another k_state",
+   "k_state": "3a978a3b4135a8e4000f7c51ab0068858e3b135610060764c25e1773e9fa9505",
+   "id": "aalice2",
+   "ver": 2,
+   "blob": "01bbafb1c324d0b728ce441b4e26fe4473ccf0063f9f6349a698b21054e2e36a7c42fdeb87e514499bfdf9beea11a6808462390d7c06c59774e7f5a41968ecbf1629cd6d08be88b8a5a695f6a43b85e7a31d5a3755585829caa059dffbe3b1f0c36b1f5b30b60ad12cfc9b19cdf000f6f1bd4a8a42714c237decd0ddc6"
+  }
+ ]
+}

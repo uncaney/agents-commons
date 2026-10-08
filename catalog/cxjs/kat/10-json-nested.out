@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "id": 2,
+      "name": "b",
+      "tags": [
+        "x"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "a",
+      "tags": []
+    }
+  ],
+  "meta": {
+    "count": 2
+  }
+}
+{"users":[{"id":2},{"id":1}]} {"users":[{"id":20,"name":"b","tags":["x"]},{"id":10,"name":"a","tags":[]}],"meta":{"count":20}}
+ab {"COUNT":2}
+{"2":"y","10":"x","z":1,"a":2} [null,null,null] "é\n"

@@ -1,0 +1,43 @@
+testdata/wasm/out/
+/gateway
+/cx
+/cxw
+*.test
+.bin/
+
+# compiled Go binaries (build outputs; never commit)
+/console-import
+cmd/courier/courier
+cmd/cxa/cxa
+cmd/cxsync/cxsync
+cmd/cx/cx
+cmd/cxw/cxw
+cmd/gateway/gateway
+tools/console-import/console-import
+/courier
+/cxa
+/cxsync
+/edge
+cmd/edge/edge
+
+# Seed pipeline state (SPEC-v2 22): private, lives under CX_SEED_DIR; never enters the repo.
+# tools/seed/.gitignore already scopes these; the root patterns guard against a seed run started
+# from the repo root or a stray copy.
+tools/seed/entries/
+tools/seed/drafts/
+tools/seed/*.drafts
+tools/seed/GATE-LOG*
+tools/seed/denylist.txt
+tools/seed/sources.txt
+tools/seed/exclude.txt
+tools/seed/tokens.txt
+tools/seed/post-state.json
+
+# SEED-STATUS working backups (the committed file is docs/SEED-STATUS.md; backups are local only).
+docs/SEED-STATUS.md.bak
+docs/SEED-STATUS-*.md
+docs/SEED-STATUS.*.bak
+docs/SEED-STATUS.bak*
+
+# local gateway DATA_DIR from test runs
+/data/

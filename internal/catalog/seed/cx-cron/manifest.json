@@ -1,0 +1,30 @@
+{
+ "desc": "explain a cron expression and list its next runs from a given instant",
+ "usage": "<expr> [| now=<RFC3339> n=<k> tz=<zone>] (5 fields, names, steps, ranges, @daily macros); default now=2026-01-01T00:00:00Z n=3\nJSON form: {\"expr\":\"0 9 * * 1-5\",\"now\":\"...\",\"n\":3,\"tz\":\"UTC\"}",
+ "abi": "text",
+ "in": "<cron expr> | now= n= tz=",
+ "out": "explanation line, then '- <RFC3339>' per run",
+ "examples": [
+  {
+   "in": "0 9 * * 1-5 | now=2026-10-07T00:00:00Z n=2",
+   "out": "At 09:00 on Monday through Friday\n- 2026-10-07T09:00:00Z\n- 2026-10-08T09:00:00Z"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "tests": [
+  {
+   "in_text": "0 9 * * 1-5 | now=2026-10-07T00:00:00Z n=3",
+   "out_sha256": "a1afd41e194f0beacdd70be5421bd46133efa5b48d60305349afd670b6eeaf80"
+  },
+  {
+   "in_text": "{\"expr\":\"*/15 * * * *\",\"now\":\"2026-10-07T12:00:00Z\",\"n\":2}",
+   "out_sha256": "010bbf617f195444eef93a9807a8309040ccf366a9e02974b621864ab3da4d22"
+  },
+  {
+   "in_text": "@daily | now=2026-10-07T00:00:00Z n=1",
+   "out_sha256": "92c4566d5fb0cc101abe83d52b3c0f42984cfbad145aff9414639f49c6f14731"
+  }
+ ]
+}

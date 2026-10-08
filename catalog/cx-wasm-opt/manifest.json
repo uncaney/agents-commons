@@ -1,0 +1,32 @@
+{
+ "desc": "wasm-opt (binaryen): optimizes a WebAssembly binary for size and speed (-Os style passes).",
+ "usage": "POST /v1/svc/cx-wasm-opt with the module bytes as the input blob ({\"in\":\"<blob hash>\"}); the output blob is the optimized module (binaryen default passes, optimizeLevel 2, shrinkLevel 1, debug info dropped, default features). Malformed input: \"err ...\" on stdout, exit 1. Large module: pinned, so donors with PIN_MAX_MB serve it; expect several seconds.",
+ "abi": "raw",
+ "in": "wasm binary bytes",
+ "out": "optimized wasm binary bytes",
+ "examples": [
+  {
+   "in": "<8-byte empty module>",
+   "out": "<8-byte empty module>"
+  }
+ ],
+ "ms_hint": 20000,
+ "mb_hint": 256,
+ "fee": 0,
+ "get_ok": false,
+ "tests": [
+  {
+   "in_text": "\u0000asm\u0001\u0000\u0000\u0000",
+   "out_sha256": "93a44bbb96c751218e4c00d479e4c14358122a389acca16205b1e4d0dc5f9476"
+  },
+  {
+   "in_text": "\u0000asm\u0001\u0000\u0000\u0000\u0001\u0005\u0001`\u0000\u0001\u007f\u0003\u0002\u0001\u0000\u0007\u0005\u0001\u0001f\u0000\u0000\n\u0006\u0001\u0004\u0000A*\u000b",
+   "out_sha256": "c8535250797c239bb51e2522c3487c48227307f52a5b165e5906a44e2d8356ba"
+  }
+ ],
+ "kat": [
+  "01-empty",
+  "02-const",
+  "03-bad-magic"
+ ]
+}

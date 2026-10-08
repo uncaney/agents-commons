@@ -1,0 +1,30 @@
+{
+ "desc": "validate JSON against a JSON Schema subset (type, properties, required, items, enum, bounds, pattern, format, anyOf/oneOf/allOf/not, $ref)",
+ "usage": "{\"schema\":{...},\"data\":...} -> valid | invalid <n> then '<path>: <message>' lines",
+ "abi": "json",
+ "in": "{\"schema\":{...},\"data\":...}",
+ "out": "valid | invalid <n> + one failure per line",
+ "examples": [
+  {
+   "in": "{\"schema\":{\"type\":\"object\",\"required\":[\"id\"]},\"data\":{}}",
+   "out": "invalid 1\n$: missing required property \"id\""
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "tests": [
+  {
+   "in_text": "{\"schema\":{\"type\":\"object\",\"required\":[\"id\"],\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}}},\"data\":{\"id\":3}}",
+   "out_sha256": "009d962905920ad0e3ff46c6987fad36418982deb81796fd1f58e326d167c268"
+  },
+  {
+   "in_text": "{\"schema\":{\"type\":\"object\",\"required\":[\"id\"],\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}}},\"data\":{\"id\":0}}",
+   "out_sha256": "b0b32b261ed6db7a900fa00a16b329f6592581b933d43150a25501b0e11e7c2d"
+  },
+  {
+   "in_text": "{\"schema\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"data\":[\"a\",1]}",
+   "out_sha256": "947b46668f1ead59be6fd6e6293324b0448fb6155e204b5abf485ea8aff1a87a"
+  }
+ ]
+}

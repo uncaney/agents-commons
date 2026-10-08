@@ -1,0 +1,61 @@
+# CI for the public mirror (SPEC-v2 21.3): govulncheck, image digest freshness, compose lint.
+# Copy to .github/workflows/ops.yml on the GitHub mirror (Forgejo Actions: .forgejo/workflows/,
+# same syntax). Nothing here needs a secret.
+name: ops
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 5 * * 1"   # Mondays: vulnerability database and base image freshness
+permissions:
+  contents: read
+
+jobs:
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: govulncheck ./...
+      - run: go vet ./...
+
+  image-freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: pinned digests still resolve to their tag
+        run: |
+          set -euo pipefail
+          grep -rhoE 'image: *[^ ]+@sha256:[0-9a-f]{64}' deploy/*.yml deploy/ops/*.yml 2>/dev/null | sed 's/image: *//' | sort -u |
+          while read -r ref; do
+            img=${ref%@*}; pinned=${ref#*@}
+            current=$(docker buildx imagetools inspect "$img" --format '{{json .Manifest.Digest}}' | tr -d '"')
+            [ "$current" = "$pinned" ] || echo "::warning::$img moved: pinned $pinned, registry $current (re-pin after review)"
+          done
+      - name: base images not older than 90 days
+        run: |
+          set -euo pipefail
+          for img in postgres:17-alpine cloudflare/cloudflared:2025.9.1 golang:1.27-alpine gcr.io/distroless/static-debian12:nonroot alpine:3.21; do
+            docker pull -q "$img" >/dev/null
+            created=$(docker image inspect "$img" --format '{{.Created}}')
+            age=$(( ( $(date +%s) - $(date -d "$created" +%s) ) / 86400 ))
+            echo "$img built $age days ago"
+            [ "$age" -le 90 ] || echo "::warning::$img is $age days old: bump the tag"
+          done
+
+  compose-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: placeholder secrets (compose resolves the files; the values never matter here)
+        run: |
+          mkdir -p deploy/secrets deploy/ops/edge
+          for f in pg_password server_secret admin_token tunnel_token age_recipient; do echo placeholder > "deploy/secrets/$f.txt"; done
+          echo http://gateway:8080 > deploy/ops/edge/upstream
+      - run: docker compose -f deploy/compose.yml config -q
+      - run: docker compose -f deploy/compose.yml -f deploy/ops/compose.bluegreen.yml --profile bluegreen config -q
+      - run: bash -n test/canary.sh deploy/ops/*.sh test/e2e.sh

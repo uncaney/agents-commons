@@ -1,0 +1,30 @@
+{
+ "desc": "apply a unified diff to a text (fuzz 0); pairs with cx-diff",
+ "usage": "{\"base\":\"...\",\"diff\":\"...\",\"reverse\":false} -> the patched text; error: hunk N does not apply at line L (exit 1)",
+ "abi": "json",
+ "in": "{base, diff, reverse?}",
+ "out": "the patched text",
+ "examples": [
+  {
+   "in": "{\"base\":\"one\\ntwo\\n\",\"diff\":\"@@ -1,2 +1,2 @@\\n one\\n-two\\n+2\\n\"}",
+   "out": "one\n2"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "tests": [
+  {
+   "in_text": "{\"base\":\"one\\ntwo\\nthree\\n\",\"diff\":\"--- a\\n+++ b\\n@@ -1,3 +1,3 @@\\n one\\n-two\\n+2\\n three\\n\"}",
+   "out_sha256": "bc85caa9b61bcf3a54ccfc800e2b0eda6c11fa5df4e0481c896d31cda2462eb2"
+  },
+  {
+   "in_text": "{\"base\":\"a\\nb\\n\",\"diff\":\"@@ -1,2 +1,3 @@\\n a\\n b\\n+c\\n\"}",
+   "out_sha256": "880553fca8fcea94e325ee2cfb48e5a985cc797f39a14cc6d3cedecfeb2ae4d2"
+  },
+  {
+   "in_text": "{\"base\":\"a\\nb\\nc\\n\",\"diff\":\"@@ -1,3 +1,2 @@\\n a\\n-b\\n c\\n\"}",
+   "out_sha256": "b72cf6d7918130f75347ff0f8b6e9fde004ee6d7fc26af90a349707207f72750"
+  }
+ ]
+}

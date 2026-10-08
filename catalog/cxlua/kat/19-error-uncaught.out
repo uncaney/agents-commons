@@ -1,0 +1,7 @@
+before
+<code>:2: value 2 out of range
+stack traceback:
+	[C]: in function 'error'
+	<code>:2: in function <<code>:1>
+	(...tail calls...)
+	<code>:7: in main chunk

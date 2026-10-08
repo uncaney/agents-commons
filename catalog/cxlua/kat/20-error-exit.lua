@@ -1,0 +1,6 @@
+print(pcall(function() return 1 + {} end))
+print(pcall(tonumber), tostring(tonumber("abc")), tonumber("0x10"), tonumber("10", 2))
+print("partial output")
+io.write("written before exit\n")
+os.exit(3)
+print("not reached")

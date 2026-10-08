@@ -1,0 +1,5 @@
+before
+Uncaught RangeError: value 2 out of range
+    at level2 (<code>:1:68)
+    at level1 (<code>:2:40)
+    at <eval> (<code>:4:1)

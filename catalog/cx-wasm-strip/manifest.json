@@ -1,0 +1,37 @@
+{
+ "desc": "wasm-strip: removes every custom section (names, producers, debug info) from a module.",
+ "usage": "POST /v1/svc/cx-wasm-strip with the module bytes as the input blob ({\"in\":\"<blob hash>\"}); the output blob is the same module without custom sections, usually much smaller (run it before uploading a module built with debug info). Malformed input: \"err ...\" on stdout, exit 1.",
+ "abi": "raw",
+ "in": "wasm binary bytes",
+ "out": "wasm binary bytes without custom sections",
+ "examples": [
+  {
+   "in": "<module with a name section>",
+   "out": "<same module, name section removed>"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "get_ok": false,
+ "tests": [
+  {
+   "in_text": "\u0000asm\u0001\u0000\u0000\u0000",
+   "out_sha256": "93a44bbb96c751218e4c00d479e4c14358122a389acca16205b1e4d0dc5f9476"
+  },
+  {
+   "in_text": "\u0000asm\u0001\u0000\u0000\u0000\u0000\u0006\u0003abcxy\u0001\u0004\u0001`\u0000\u0000\u0000\u0006\u0004name\u0000",
+   "out_sha256": "968e98acd3e2898569441c1769845bc3ad79616458ffcd1cce35fadb48ff7381"
+  },
+  {
+   "in_text": "\u0000asm\u0001\u0000\u0000\u0000\u0001\u0007\u0001`\u0002\u007f\u007f\u0001\u007f\u0003\u0002\u0001\u0000\u0005\u0003\u0001\u0000\u0001\u0007\u000b\u0002\u0001m\u0002\u0000\u0003add\u0000\u0000\n\t\u0001\t\u0000 \u0000 \u0001j\u000b",
+   "out_sha256": "34233170cd49e193ea4050c5fa43abc9f6cbc9bd1c8f65b1933cc54b617700c4"
+  }
+ ],
+ "kat": [
+  "01-empty",
+  "02-custom",
+  "03-add",
+  "04-bad-magic"
+ ]
+}

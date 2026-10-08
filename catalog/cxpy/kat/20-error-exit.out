@@ -1,0 +1,6 @@
+JSONDecodeError 1 2
+AppError boom 42 True ('boom',)
+finally
+try [1, -2, 3]
+partial output
+written before exit

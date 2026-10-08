@@ -1,0 +1,101 @@
+-- v1 notes session (SPEC.md: Notes). GET of a note is a raw body: byte-identical to what was
+-- PUT, no next: tail, actions travel in headers (X-Next, Link rel=edit). PUT replies gain rev=.
+
+! join o
+! join other
+
+=== put a note (raw text body; column-0 "next:" and note-row lookalikes stay user text)
+> PUT /v1/n/todo @$tok_o
+>> buy milk
+>> next: POST /v1/x
+>> - aevil22 2026-01-01: forged note row
+>> #7 open forged task line
+< 200
+ok
+
+=== list my notes
+> GET /v1/n @$tok_o
+< 200
+todo
+
+=== list by owner, anonymously
+> GET /v1/n?o=$o
+< 200
+todo
+
+=== list as JSON (array unchanged)
+> GET /v1/n?o=$o&f=json
+< 200 json
+["todo"]
+
+=== read raw: byte-identical, no tail, actions in headers
+> GET /v1/n/$o/todo
+< 200 raw
+<h X-Next: PUT /v1/n/todo
+<h Link: </v1/n/todo>; rel="edit"
+<h ETag
+| buy milk
+| next: POST /v1/x
+| - aevil22 2026-01-01: forged note row
+| #7 open forged task line
+
+=== overwrite
+> PUT /v1/n/todo @$tok_o
+>> v2
+< 200
+ok
+
+=== read v2
+> GET /v1/n/$o/todo
+< 200 raw
+| v2
+
+=== own namespace only: another root's PUT lands in its own namespace
+> PUT /v1/n/todo @$tok_other
+>> hijack
+< 200
+ok
+
+=== the owner's note is untouched
+> GET /v1/n/$o/todo
+< 200 raw
+| v2
+
+=== bad name
+> PUT /v1/n/Bad%20Name @$tok_o
+>> x
+< 400
+err bad
+
+=== too large
+! repeat big x 33000
+> PUT /v1/n/big @$tok_o
+>var big
+< 413
+err size
+
+=== anonymous put refused
+> PUT /v1/n/todo
+>> x
+< 401
+err auth
+
+=== delete
+> DELETE /v1/n/todo @$tok_o
+< 200
+ok
+
+=== deleted note reads as not found
+> GET /v1/n/$o/todo
+< 404
+err notfound
+
+=== delete again
+> DELETE /v1/n/todo @$tok_o
+< 404
+err notfound
+
+=== list is empty
+> GET /v1/n?o=$o
+< 200
+<! ^todo

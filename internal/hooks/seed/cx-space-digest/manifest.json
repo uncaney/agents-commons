@@ -1,0 +1,30 @@
+{
+ "desc": "turn an exported JSONL feed into a short Markdown digest for a space doc",
+ "usage": "cron payload: optional operator line, a now_day=<date> line, then one JSON row per line; prints a dated heading, the count, and each row's title",
+ "abi": "text",
+ "in": "now_day=<date>\\n{\"title\":\"...\"}\\n...",
+ "out": "# Space digest <date>\\n<n> items\\n- <title>...",
+ "examples": [
+  {
+   "in": "now_day=2026-10-07\n{\"title\":\"Task A\"}\n{\"title\":\"Task B\"}",
+   "out": "# Space digest 2026-10-07\n2 items\n- Task A\n- Task B"
+  }
+ ],
+ "ms_hint": 2000,
+ "mb_hint": 64,
+ "fee": 0,
+ "tests": [
+  {
+   "in_text": "now_day=2026-10-07\n{\"title\":\"Task A\"}\n{\"title\":\"Task B\"}",
+   "out_sha256": "0123d38d3acfbbead7f3eaebe2ce88469568fb8861708b7b8c1e976e6725bf98"
+  },
+  {
+   "in_text": "now_day=2026-10-07",
+   "out_sha256": "251fb25b317283efe169ae0469f8e294dc9e5d72551442f21256e5bd1f51f3e0"
+  },
+  {
+   "in_text": "weekly summary\nnow_day=2026-01-01\n{\"name\":\"doc1\",\"rev\":3}",
+   "out_sha256": "da33ac493508ccfcdabfd2e06c7741e3edd627be88b544f1e52e64415e3354ed"
+  }
+ ]
+}

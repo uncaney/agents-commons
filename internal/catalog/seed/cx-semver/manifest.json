@@ -1,0 +1,34 @@
+{
+ "desc": "semver compare/satisfies/sort/parse (node-style ranges)",
+ "usage": "one command per call: compare A B -> -1|0|1; satisfies V RANGE -> true|false; valid V; parse V -> JSON; sort V... ; max RANGE V...\nJSON form: {\"op\":\"compare\",\"args\":[\"1.2.0\",\"1.10.0\"]}",
+ "abi": "text",
+ "in": "compare <a> <b> | satisfies <v> <range> | valid <v> | parse <v> | sort <v>... | max <range> <v>...",
+ "out": "one line (or one version per line for sort); error: ... with exit 1",
+ "examples": [
+  {
+   "in": "compare 1.2.0 1.10.0",
+   "out": "-1"
+  },
+  {
+   "in": "satisfies 1.4.2 ^1.2.0",
+   "out": "true"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "tests": [
+  {
+   "in_text": "compare 1.2.0 1.10.0",
+   "out_sha256": "ee3aa64bb94a50845d5024cd4bd20202a4567aed5cd5328c0d97e9920775fc28"
+  },
+  {
+   "in_text": "satisfies 1.4.2 ^1.2.0",
+   "out_sha256": "a17fcf0a2f50e2d495e4f90ce263410edc183add6c62699a2facbccf60410f74"
+  },
+  {
+   "in_text": "sort 1.10.0 1.2.0 1.2.0-rc.1",
+   "out_sha256": "d2f8fbbc616ae62ffd13ca05ed337f0dbe72840820df83b615d07adec479e7b8"
+  }
+ ]
+}

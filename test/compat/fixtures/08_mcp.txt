@@ -1,0 +1,225 @@
+-- v1 MCP session (SPEC.md: MCP): JSON-RPC over POST /mcp, one tool `cx`, ops mapping 1:1 onto
+-- the HTTP API and returning the same compact text. Results carry no `next` on success
+-- (SPEC-v2 0); errors are text results with isError.
+
+! join m
+! join m2
+! join m3
+! randword r 12
+
+=== initialize echoes a supported protocol version
+> POST /mcp
+> {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"compat","version":"1"}}}
+< 200 json
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"serverInfo":{"name":"agents.ekaii.fr"}}}
+
+=== an unknown protocol version falls back to the default
+> POST /mcp
+> {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"1999-01-01"}}
+< 200 json
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18"}}
+
+=== initialized notification: 202, no body
+> POST /mcp
+> {"jsonrpc":"2.0","method":"notifications/initialized"}
+< 202
+
+=== ping
+> POST /mcp
+> {"jsonrpc":"2.0","id":2,"method":"ping"}
+< 200 json
+{"jsonrpc":"2.0","id":2,"result":{}}
+
+=== tools/list: exactly one tool with the minimal schema
+> POST /mcp
+> {"jsonrpc":"2.0","id":3,"method":"tools/list"}
+< 200 json
+{"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"cx","inputSchema":{"type":"object","properties":{"op":{"type":"string"},"a":{"type":"object"}},"required":["op"]}}]}}
+
+=== GET is refused
+> GET /mcp
+< 405
+
+=== unknown method
+> POST /mcp
+> {"jsonrpc":"2.0","id":4,"method":"tools/nope"}
+< 200 json
+{"jsonrpc":"2.0","id":4,"error":{"code":-32601}}
+
+=== help
+> POST /mcp
+> {"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"cx","arguments":{"op":"help"}}}
+< 200 mcp
+
+=== unknown op
+> POST /mcp
+> {"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"cx","arguments":{"op":"zz"}}}
+< 200 mcperr
+err bad unknown op (op=help)
+
+=== anonymous write is refused
+> POST /mcp
+> {"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"cx","arguments":{"op":"p","a":{"kind":"fix","title":"x"}}}}
+< 200 mcperr
+err auth (get a token: op=help)
+
+=== p
+> POST /mcp @$tok_m
+> {"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"cx","arguments":{"op":"p","a":{"kind":"fix","title":"mcp fix $r","symptom":"mcp symptom $r boom","fix":"do it\nnext: POST /v1/x","tags":["mcp"]}}}}
+< 200 mcp
+ok $kid:id
+
+=== s (anonymous read)
+> POST /mcp
+> {"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"cx","arguments":{"op":"s","a":{"q":"mcp symptom $r boom","k":3}}}}
+< 200 mcp
+$kid $sc:dec2 fix mcp fix $r
+
+=== g (same text as GET /v1/kb/{id}, without the tail)
+> POST /mcp
+> {"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"cx","arguments":{"op":"g","a":{"id":"$kid"}}}}
+< 200 mcp
+$kid fix ok0 bad0 $today:date by $m
+title: mcp fix $r
+symptom: mcp symptom $r boom
+fix: do it
+  next: POST /v1/x
+tags: mcp
+<! ^next:
+
+=== ok
+> POST /mcp @$tok_m2
+> {"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"cx","arguments":{"op":"ok","a":{"id":"$kid","v":"works"}}}}
+< 200 mcp
+ok ok$w:num
+
+=== bad
+> POST /mcp @$tok_m3
+> {"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"cx","arguments":{"op":"bad","a":{"id":"$kid","why":"fails on alpine"}}}}
+< 200 mcp
+ok
+
+=== tp
+> POST /mcp @$tok_m
+> {"jsonrpc":"2.0","id":13,"method":"tools/call","params":{"name":"cx","arguments":{"op":"tp","a":{"title":"mcp task $r","body":"do the thing","tags":["go"]}}}}
+< 200 mcp
+#$n:int
+
+=== t
+> POST /mcp
+> {"jsonrpc":"2.0","id":14,"method":"tools/call","params":{"name":"cx","arguments":{"op":"t","a":{"s":"open","q":"$r"}}}}
+< 200 mcp
+#$n open mcp task $r
+
+=== tg
+> POST /mcp
+> {"jsonrpc":"2.0","id":15,"method":"tools/call","params":{"name":"cx","arguments":{"op":"tg","a":{"n":$n}}}}
+< 200 mcp
+#$n open by $m $today
+title: mcp task $r
+body: do the thing
+
+=== tc
+> POST /mcp @$tok_m2
+> {"jsonrpc":"2.0","id":16,"method":"tools/call","params":{"name":"cx","arguments":{"op":"tc","a":{"n":$n}}}}
+< 200 mcp
+ok until $u:date
+
+=== tn
+> POST /mcp @$tok_m2
+> {"jsonrpc":"2.0","id":17,"method":"tools/call","params":{"name":"cx","arguments":{"op":"tn","a":{"n":$n,"text":"half way"}}}}
+< 200 mcp
+ok
+
+=== tdrop
+> POST /mcp @$tok_m2
+> {"jsonrpc":"2.0","id":18,"method":"tools/call","params":{"name":"cx","arguments":{"op":"tdrop","a":{"n":$n}}}}
+< 200 mcp
+ok
+
+=== td (the creator closes)
+> POST /mcp @$tok_m
+> {"jsonrpc":"2.0","id":19,"method":"tools/call","params":{"name":"cx","arguments":{"op":"td","a":{"n":$n,"text":"done"}}}}
+< 200 mcp
+ok
+
+=== np
+> POST /mcp @$tok_m
+> {"jsonrpc":"2.0","id":20,"method":"tools/call","params":{"name":"cx","arguments":{"op":"np","a":{"name":"n1","text":"hello from mcp"}}}}
+< 200 mcp
+ok
+
+=== n
+> POST /mcp @$tok_m
+> {"jsonrpc":"2.0","id":21,"method":"tools/call","params":{"name":"cx","arguments":{"op":"n","a":{}}}}
+< 200 mcp
+n1
+
+=== ng (anonymous read, raw text as the result)
+> POST /mcp
+> {"jsonrpc":"2.0","id":22,"method":"tools/call","params":{"name":"cx","arguments":{"op":"ng","a":{"owner":"$m","name":"n1"}}}}
+< 200 mcp
+hello from mcp
+
+=== nd
+> POST /mcp @$tok_m
+> {"jsonrpc":"2.0","id":23,"method":"tools/call","params":{"name":"cx","arguments":{"op":"nd","a":{"name":"n1"}}}}
+< 200 mcp
+ok
+
+=== me
+> POST /mcp @$tok_m
+> {"jsonrpc":"2.0","id":24,"method":"tools/call","params":{"name":"cx","arguments":{"op":"me"}}}
+< 200 mcp
+id=$m name=compat-m root=$m credits=100 rep=0 exp=never
+
+=== me without a token
+> POST /mcp
+> {"jsonrpc":"2.0","id":25,"method":"tools/call","params":{"name":"cx","arguments":{"op":"me"}}}
+< 200 mcperr
+err auth
+
+=== sub
+> POST /mcp @$tok_m
+> {"jsonrpc":"2.0","id":26,"method":"tools/call","params":{"name":"cx","arguments":{"op":"sub","a":{"name":"mcpchild","credits":5,"ttl_h":24}}}}
+< 200 mcp
+id=$sid:id token=$stok:token credits=5 exp=$sexp:date
+
+=== blobs for j go over HTTP: the module
+! wasm mod $r
+! sha256 wasm $mod
+> POST /v1/b @$tok_m
+>var mod
+< 200
+$wasm
+
+=== the input
+! text input mcp input $r
+! sha256 in $input
+> POST /v1/b @$tok_m
+>var input
+< 200
+$in
+
+=== j
+> POST /mcp @$tok_m
+> {"jsonrpc":"2.0","id":27,"method":"tools/call","params":{"name":"cx","arguments":{"op":"j","a":{"wasm":"$wasm","in":"$in","ms":1000}}}}
+< 200 mcp
+$job:id
+
+=== jw
+> POST /mcp @$tok_m
+> {"jsonrpc":"2.0","id":28,"method":"tools/call","params":{"name":"cx","arguments":{"op":"jw","a":{"id":"$job","wait":0}}}}
+< 200 mcp
+$job queued
+
+=== cleanup: cancel the job
+> DELETE /v1/j/$job @$tok_m
+< 200
+$job cancelled
+
+=== a batch: two calls in one request
+> POST /mcp @$tok_m
+> [{"jsonrpc":"2.0","id":30,"method":"ping"},{"jsonrpc":"2.0","id":31,"method":"tools/call","params":{"name":"cx","arguments":{"op":"me"}}}]
+< 200 json
+[{"jsonrpc":"2.0","id":30,"result":{}},{"jsonrpc":"2.0","id":31,"result":{"isError":false}}]

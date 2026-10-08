@@ -1,0 +1,107 @@
+{
+ "name": "labels",
+ "description": "Domain separation (E2EE 2.3): every signed, MACed or derived input is label || 0x00 || payload; a bare label when there is no payload. HKDF is hkdf.Key(sha256, secret, salt, info, n) with salt agents.ekaii.fr/cx1 unless a per-message salt is given.",
+ "labels": [
+  "cx1/bundle",
+  "cx1/rotate",
+  "cx1/succ",
+  "cx1/req",
+  "cx1/resp",
+  "cx1/rcpt",
+  "cx1/grcpt",
+  "cx1/sth",
+  "cx1/witness",
+  "cx1/cert",
+  "cx1/ledger",
+  "cx1/policy",
+  "cx1/att-rep",
+  "cx1/mail",
+  "cx1/auth",
+  "cx1/auth-mac",
+  "cx1/frank",
+  "cx1/gctx",
+  "cx1/epoch",
+  "cx1/init",
+  "cx1/confirm",
+  "cx1/msg",
+  "cx1/gmsg",
+  "cx1/gobj",
+  "cx1/gcommit",
+  "cx1/gwelcome",
+  "cx1/gsig",
+  "cx1/gfrank",
+  "cx1/state",
+  "cx1/att",
+  "cx1/snap",
+  "cx1/share",
+  "cx1/loc",
+  "cx1/key",
+  "cx1/d-write",
+  "cx1/fp",
+  "cx1/regid",
+  "cx1/stamp",
+  "cx1/ohttp",
+  "cx1/ohttp-resp",
+  "cxs1",
+  "cx1/ik",
+  "cx1/rk",
+  "cx1/ak",
+  "cx1/lk/",
+  "cx1/ek/",
+  "cx1/sub/",
+  "cx1/mldsa",
+  "cx-mk",
+  "cx-mk-recovery",
+  "cx-seal-v1",
+  "mac"
+ ],
+ "default_salt": "agents.ekaii.fr/cx1",
+ "separator": "00",
+ "labeled": [
+  {
+   "label": "cx1/mail",
+   "parts": [
+    "61616c69636532",
+    "61626f62626f62",
+    "00000007"
+   ],
+   "out": "6378312f6d61696c0061616c6963653261626f62626f6200000007"
+  },
+  {
+   "label": "cx1/ik",
+   "parts": [],
+   "out": "6378312f696b"
+  },
+  {
+   "label": "cxs1",
+   "parts": [
+    "",
+    "ff"
+   ],
+   "out": "6378733100ff"
+  }
+ ],
+ "hkdf": [
+  {
+   "secret": "1e7d2c721546e0468cdddead79c2ad728af2292072106cdadec59e649ac02508",
+   "salt": "",
+   "info": "6378312f696b",
+   "n": 32,
+   "out": "a897c88ea7e2338d159826f9a8f826c4ab4f4a0028edf483bacc96d0310d4297"
+  },
+  {
+   "secret": "1e7d2c721546e0468cdddead79c2ad728af2292072106cdadec59e649ac02508",
+   "salt": "89be980496bccabeb39880c34a8db90ded9aab3d050213e982694b5e1d1c057a",
+   "info": "6378312f617574680061616c6963653261626f62626f62",
+   "n": 32,
+   "out": "dde1cc1ea06de559a57b9f174be7580700fa25f4b9390d7e945ae37e1e3981ad"
+  },
+  {
+   "secret": "1e7d2c721546e0468cdddead79c2ad728af2292072106cdadec59e649ac02508",
+   "salt": "",
+   "info": "6378312f656b2f322f00000b8f",
+   "n": 32,
+   "out": "53f12bde30691897b86c2ad9640dfaf07c038d7e1e6a0459b2b64f579fa2289d"
+  }
+ ]
+}

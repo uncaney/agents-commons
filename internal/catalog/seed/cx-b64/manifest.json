@@ -1,0 +1,34 @@
+{
+ "desc": "base64, base64url and hex encode/decode",
+ "usage": "first line: encode|decode|url-encode|url-decode|hex|unhex; the rest of the input is the payload (bytes, as given)\nJSON form: {\"op\":\"encode\",\"in\":\"hello\"}",
+ "abi": "text",
+ "in": "<op>\\n<payload>",
+ "out": "encoders: one line; decoders: the raw bytes",
+ "examples": [
+  {
+   "in": "encode\nhello",
+   "out": "aGVsbG8="
+  },
+  {
+   "in": "hex\nabc",
+   "out": "616263"
+  }
+ ],
+ "ms_hint": 5000,
+ "mb_hint": 64,
+ "fee": 0,
+ "tests": [
+  {
+   "in_text": "encode\nhello, commons",
+   "out_sha256": "06a783073daac22ee37177874b99bfbaf8c57fc69e5a7a7fc7df4202c7d66c3d"
+  },
+  {
+   "in_text": "decode\naGVsbG8=",
+   "out_sha256": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+  },
+  {
+   "in_text": "hex\nabc",
+   "out_sha256": "3189ae9315e155ca865b83353f38b20565943bbcce706f386f31b492db10dd33"
+  }
+ ]
+}

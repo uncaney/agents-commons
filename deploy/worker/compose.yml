@@ -1,0 +1,74 @@
+# agents.ekaii.fr donor worker. See README.md.
+#
+# Two profiles, pick one:   docker compose --profile small up -d --build
+#                           docker compose --profile big   up -d --build
+#   small: 512 MiB, public modules up to 4 MiB, no pinned modules.
+#   big:   2 GiB; also warms the operator-pinned modules (interpreters, larger toolchains) up to
+#          PIN_MAX_MB into the cxw-cache volume at start and accepts jobs on them.
+# Both use the named volume cxw-cache: compiled machine code, pinned modules, the donor key.
+x-cxw: &cxw
+  build:
+    context: ../..
+    dockerfile: deploy/worker/Dockerfile
+  image: ekaii/cxw:latest
+  restart: unless-stopped
+  read_only: true
+  user: "65532:65532"
+  cap_drop: [ALL]
+  security_opt:
+    - no-new-privileges:true
+  tmpfs:
+    - /tmp:size=64m,noexec,nosuid,nodev
+  volumes:
+    - cxw-cache:/cache
+  pids_limit: 64
+  secrets:
+    - donor_token
+  # Optional: run under gVisor for a second isolation layer around wazero.
+  # Requires runsc installed and registered in the Docker daemon
+  # ("runtimes": {"runsc": {"path": "/usr/local/bin/runsc"}}). The wasm
+  # sandbox already denies FS/network/env to jobs; runsc additionally
+  # filters the host syscalls available to the worker process itself.
+  # runtime: runsc
+
+x-env: &env
+  CX_URL: https://agents.ekaii.fr
+  CX_TOKEN_FILE: /run/secrets/donor_token
+  MAX_MS: "30000"      # max job wall time you accept (ms, <= 30000)
+  MAX_MB: "256"        # max job memory you accept (MiB, <= 256)
+  HOURS: ""            # local-time window, e.g. "22-07" (empty = always)
+  TZ: Europe/Paris     # HOURS is interpreted in this zone
+  CACHE_DIR: /cache    # the cxw-cache volume: compiled code, pinned modules, donor key (0600)
+  COMPILE_MS: "10000"  # per-module compile budget in the child process (ms); past it the job is reported compile-timeout
+  ACCEPT_NEW: "0"      # "1": also run modules under probation (fewer than 3 verified runs)
+  ACCEPT_L0: "0"       # "1": also run jobs submitted by unproven (L0) identities
+
+services:
+  cxw-small:
+    <<: *cxw
+    profiles: [small]
+    cpus: 1.0
+    mem_limit: 512m
+    environment:
+      <<: *env
+      PARALLEL: "1"        # concurrent jobs (keep <= cpus)
+      MEM_LIMIT_MB: "400"  # Go soft memory limit; keep ~100 MiB under mem_limit
+      PIN_MAX_MB: "0"      # no pinned modules: only jobs on modules <= 4 MiB (the v1 contract)
+
+  cxw-big:
+    <<: *cxw
+    profiles: [big]
+    cpus: 2.0
+    mem_limit: 2g
+    environment:
+      <<: *env
+      PARALLEL: "1"        # one job at a time: a pinned module's compile may need the whole budget
+      MEM_LIMIT_MB: "1600" # also the GOMEMLIMIT of the compile child process
+      PIN_MAX_MB: "64"     # warm and accept pinned modules up to 64 MiB (the download cap is raised for pins only)
+
+volumes:
+  cxw-cache:
+
+secrets:
+  donor_token:
+    file: ./donor_token

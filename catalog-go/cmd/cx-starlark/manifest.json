@@ -1,0 +1,90 @@
+{
+  "desc": "cx-starlark: go.starlark.net (Python dialect), deterministic. print to stdout; time.now() rides the fake clock.",
+  "abi": "text",
+  "in": "{code,stdin} or NUL-split (15.4)",
+  "out": "program stdout; traceback + exit 1 on error",
+  "ms_hint": 10000,
+  "mb_hint": 32,
+  "tests": [
+    {
+      "in_text": "{\"code\":\"print(sum(range(10)))\",\"stdin\":\"\"}",
+      "out_sha256": "420002158111bff8adb3347d84029e480f45e60e1869b454b6adac3345f9f7d4"
+    },
+    {
+      "in_text": "{\"code\":\"print(7 * 6)\",\"stdin\":\"\"}",
+      "out_sha256": "084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0"
+    },
+    {
+      "in_text": "{\"code\":\"print(17 % 5)\",\"stdin\":\"\"}",
+      "out_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    {
+      "in_text": "{\"code\":\"print(10 // 3)\",\"stdin\":\"\"}",
+      "out_sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+    },
+    {
+      "in_text": "{\"code\":\"print(sum([x * x for x in range(5)]))\",\"stdin\":\"\"}",
+      "out_sha256": "f4ccd05b3271c386ee55d9876c7450012a3b361e5065c09dc22075e38b3cc35c"
+    },
+    {
+      "in_text": "{\"code\":\"print(\\\"hello\\\".upper())\",\"stdin\":\"\"}",
+      "out_sha256": "3b09aeb6f5f5336beb205d7f720371bc927cd46c21922e334d47ba264acb5ba4"
+    },
+    {
+      "in_text": "{\"code\":\"print(\\\", \\\".join([\\\"a\\\", \\\"b\\\", \\\"c\\\"]))\",\"stdin\":\"\"}",
+      "out_sha256": "c684753b5936e93d36aebbab9863bc921ab6d17ecdb0cf00900fa2a95990c215"
+    },
+    {
+      "in_text": "{\"code\":\"print(len(\\\"starlark\\\"))\",\"stdin\":\"\"}",
+      "out_sha256": "aa67a169b0bba217aa0aa88a65346920c84c42447c36ba5f7ea65f422c1fe5d8"
+    },
+    {
+      "in_text": "{\"code\":\"print(\\\"abcabc\\\".replace(\\\"a\\\", \\\"X\\\"))\",\"stdin\":\"\"}",
+      "out_sha256": "a0ca014722b696099ccbc25c86d6f21b15db44a12373df393f77b75f54c41030"
+    },
+    {
+      "in_text": "{\"code\":\"print(stdin.strip())\",\"stdin\":\"  padded  \"}",
+      "out_sha256": "8a013f89d086584ab73fb4c46a120afe65941f43a2f1990075c272821112a363"
+    },
+    {
+      "in_text": "{\"code\":\"print(json.encode({\\\"a\\\": 1, \\\"b\\\": [2, 3]}))\",\"stdin\":\"\"}",
+      "out_sha256": "06d1ac940bec12987f319657ce46130daa57ab2d831421ddb892eba6a4509692"
+    },
+    {
+      "in_text": "{\"code\":\"print(json.decode('[1,2,3]')[1])\",\"stdin\":\"\"}",
+      "out_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    {
+      "in_text": "{\"code\":\"d = json.decode('{\\\"x\\\":10,\\\"y\\\":20}'); print(d[\\\"x\\\"] + d[\\\"y\\\"])\",\"stdin\":\"\"}",
+      "out_sha256": "f4ccd05b3271c386ee55d9876c7450012a3b361e5065c09dc22075e38b3cc35c"
+    },
+    {
+      "in_text": "{\"code\":\"print(\\\"foo123bar\\\".startswith(\\\"foo\\\"))\",\"stdin\":\"\"}",
+      "out_sha256": "a9ac0c3ac83c40e1b4c3416066d63d324ee9f8c144641dfeed72d140b6557245"
+    },
+    {
+      "in_text": "{\"code\":\"print(json.encode(\\\"a,b,c\\\".split(\\\",\\\")))\",\"stdin\":\"\"}",
+      "out_sha256": "e2327913c0d3c766e86dc23783f5a9296123c2bc5ceb41851cb0cb5f753776e9"
+    },
+    {
+      "in_text": "{\"code\":\"print(\\\"hello world\\\".find(\\\"world\\\"))\",\"stdin\":\"\"}",
+      "out_sha256": "06e9d52c1720fca412803e3b07c4b228ff113e303f4c7ab94665319d832bbfb7"
+    },
+    {
+      "in_text": "{\"code\":\"print(time.now().year)\",\"stdin\":\"\"}",
+      "out_sha256": "7bd79c0161b0087185ccbc5cd44b0adc53d894e2eb2d57fc134fec2bad819427"
+    },
+    {
+      "in_text": "{\"code\":\"print(time.from_timestamp(0).unix)\",\"stdin\":\"\"}",
+      "out_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "in_text": "{\"code\":\"fail(\\\"boom\\\")\",\"stdin\":\"\"}",
+      "out_sha256": "45e28338d14f306b8f0f7e037b7f0ff86de9a918819bb7bf3138c28988f9f6b9"
+    },
+    {
+      "in_text": "{\"code\":\"print(1 // 0)\",\"stdin\":\"\"}",
+      "out_sha256": "60851d9399d41bd2ca509f4302ed4abe6fcf9f7e8fd8311eb1c93d982e4d990e"
+    }
+  ]
+}

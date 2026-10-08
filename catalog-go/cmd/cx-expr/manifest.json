@@ -1,0 +1,90 @@
+{
+  "desc": "cx-expr: github.com/expr-lang/expr. The program is one expression; its result renders to stdout (strings verbatim, else canonical JSON). clock is the fixed time.",
+  "abi": "text",
+  "in": "{code,stdin} or NUL-split (15.4)",
+  "out": "program stdout; traceback + exit 1 on error",
+  "ms_hint": 10000,
+  "mb_hint": 32,
+  "tests": [
+    {
+      "in_text": "{\"code\":\"1 + 2 * 3\",\"stdin\":\"\"}",
+      "out_sha256": "10159baf262b43a92d95db59dae1f72c645127301661e0a3ce4e38b295a97c58"
+    },
+    {
+      "in_text": "{\"code\":\"sum(1..10)\",\"stdin\":\"\"}",
+      "out_sha256": "4c82a221b575ce7fe118b2e8cdf0764bf4ef570a3017e80b6d3438af9095f376"
+    },
+    {
+      "in_text": "{\"code\":\"max(3, 7, 2)\",\"stdin\":\"\"}",
+      "out_sha256": "10159baf262b43a92d95db59dae1f72c645127301661e0a3ce4e38b295a97c58"
+    },
+    {
+      "in_text": "{\"code\":\"17 % 5\",\"stdin\":\"\"}",
+      "out_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    {
+      "in_text": "{\"code\":\"len(1..100)\",\"stdin\":\"\"}",
+      "out_sha256": "eea8254c7500ba3de996aa8ad6af399183f04e17d4a8102fde539dbc93a90012"
+    },
+    {
+      "in_text": "{\"code\":\"upper(\\\"hello\\\")\",\"stdin\":\"\"}",
+      "out_sha256": "3b09aeb6f5f5336beb205d7f720371bc927cd46c21922e334d47ba264acb5ba4"
+    },
+    {
+      "in_text": "{\"code\":\"join([\\\"a\\\", \\\"b\\\", \\\"c\\\"], \\\"-\\\")\",\"stdin\":\"\"}",
+      "out_sha256": "661016e144928da1abc933ec351230f95761ec66d2a45f307e2a265f47abc0ab"
+    },
+    {
+      "in_text": "{\"code\":\"len(\\\"expr\\\")\",\"stdin\":\"\"}",
+      "out_sha256": "7de1555df0c2700329e815b93b32c571c3ea54dc967b89e81ab73b9972b72d1d"
+    },
+    {
+      "in_text": "{\"code\":\"trim(stdin)\",\"stdin\":\"  hi  \"}",
+      "out_sha256": "98ea6e4f216f2fb4b69fff9b3a44842c38686ca685f3f55dc48c5d3fb1107be4"
+    },
+    {
+      "in_text": "{\"code\":\"lower(\\\"MixED\\\")\",\"stdin\":\"\"}",
+      "out_sha256": "218706d3ed39fb141bea781ee0345f519a622ddb23a5e231a386c181c9fddaa5"
+    },
+    {
+      "in_text": "{\"code\":\"{a: 1, b: 2}\",\"stdin\":\"\"}",
+      "out_sha256": "e8d38819d39f705646bfb643368eca78f7db476c16471dbc33b941b27326410d"
+    },
+    {
+      "in_text": "{\"code\":\"fromJSON(\\\"[1,2,3]\\\")[1]\",\"stdin\":\"\"}",
+      "out_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    {
+      "in_text": "{\"code\":\"fromJSON('{\\\"x\\\":5}').x * 2\",\"stdin\":\"\"}",
+      "out_sha256": "917df3320d778ddbaa5c5c7742bc4046bf803c36ed2b050f30844ed206783469"
+    },
+    {
+      "in_text": "{\"code\":\"hasPrefix(\\\"foobar\\\", \\\"foo\\\")\",\"stdin\":\"\"}",
+      "out_sha256": "a17fcf0a2f50e2d495e4f90ce263410edc183add6c62699a2facbccf60410f74"
+    },
+    {
+      "in_text": "{\"code\":\"\\\"abc123\\\" matches \\\"^[a-z]+[0-9]+$\\\"\",\"stdin\":\"\"}",
+      "out_sha256": "a17fcf0a2f50e2d495e4f90ce263410edc183add6c62699a2facbccf60410f74"
+    },
+    {
+      "in_text": "{\"code\":\"split(\\\"a,b,c\\\", \\\",\\\")\",\"stdin\":\"\"}",
+      "out_sha256": "e2327913c0d3c766e86dc23783f5a9296123c2bc5ceb41851cb0cb5f753776e9"
+    },
+    {
+      "in_text": "{\"code\":\"clock.Year()\",\"stdin\":\"\"}",
+      "out_sha256": "7bd79c0161b0087185ccbc5cd44b0adc53d894e2eb2d57fc134fec2bad819427"
+    },
+    {
+      "in_text": "{\"code\":\"date(\\\"2020-05-15\\\").Year()\",\"stdin\":\"\"}",
+      "out_sha256": "6961729a2feb7f501ade1082297c00ff441de378082f62bbbd6342973960e21d"
+    },
+    {
+      "in_text": "{\"code\":\"int(\\\"abc\\\")\",\"stdin\":\"\"}",
+      "out_sha256": "90d08968b10ff30be60bc04cc144de97fb1be3e14e5039d5f2142776503013cd"
+    },
+    {
+      "in_text": "{\"code\":\"fromJSON(\\\"not json\\\")\",\"stdin\":\"\"}",
+      "out_sha256": "8b44a257c4abe70458d75d69587531fba08775cd342d92e9b2b3a8bbee62aefb"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+JSONDecodeError Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+ValueError invalid literal for int() with base 10: 'abc'
+ZeroDivisionError division by zero
+KeyError 'x'
+AppError boom ('boom',)

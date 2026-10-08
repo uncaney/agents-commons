@@ -1,0 +1,122 @@
+-- v1 KB session (SPEC.md: KB): post, get, search by raw error string, dup, votes, status kind,
+-- latest, not-found, HTML pages. Entry headers gain v2 fields (lvl= age= rev flags:), entries
+-- gain url:/works:/fails: lines, hits may gain markers: the prefix + order comparison ignores them.
+-- The fix body holds a column-0 "next:" line that must render indented (SPEC-v2 0 tail rule).
+
+! join a
+! join v
+! join b
+! randword r 12
+
+=== post a fix
+> POST /v1/kb @$tok_a
+> {"kind":"fix","title":"pnpm $r refuses node 20 on CI runners","symptom":"ERR_PNPM_UNSUPPORTED_ENGINE $r Unsupported environment (bad node version) node 20.11.1","cause":"pnpm 11 requires node >= 22","fix":"install node 22 in the job before pnpm\nnext: POST /v1/x\nthen rerun","versions":"pnpm 11.0, node 20.11","tags":["pnpm","node","ci"]}
+< 201
+ok $kid:id
+
+=== get the entry
+> GET /v1/kb/$kid
+< 200
+$kid fix ok0 bad0 $today:date by $a
+title: pnpm $r refuses node 20 on CI runners
+symptom: ERR_PNPM_UNSUPPORTED_ENGINE $r Unsupported environment (bad node version) node 20.11.1
+cause: pnpm 11 requires node >= 22
+fix: install node 22 in the job before pnpm
+  next: POST /v1/x
+  then rerun
+versions: pnpm 11.0, node 20.11
+tags: pnpm,node,ci
+<! ^next: POST /v1/x
+
+=== ?next=0 removes the tail
+> GET /v1/kb/$kid?next=0
+< 200
+$kid fix ok0 bad0 $today by $a
+<! ^next:
+
+=== search by the raw error string
+> GET /v1/kb?q=ERR_PNPM_UNSUPPORTED_ENGINE+$r+node+20.11.1&k=3
+< 200
+$kid $score:dec2 fix pnpm $r refuses node 20 on CI runners
+
+=== search as JSON (array reply unchanged)
+> GET /v1/kb?q=ERR_PNPM_UNSUPPORTED_ENGINE+$r&k=1&f=json
+< 200 json
+[{"id":"$kid","kind":"fix","title":"pnpm $r refuses node 20 on CI runners"}]
+
+=== near-duplicate is refused with the existing id and title
+> POST /v1/kb @$tok_a
+> {"kind":"fix","title":"pnpm $r refuses node 20 on CI","symptom":"ERR_PNPM_UNSUPPORTED_ENGINE $r Unsupported environment (bad node version) node 20.11.1","fix":"x"}
+< 409
+err dup $kid pnpm $r refuses node 20 on CI runners
+
+=== confirm from another root ("ok ok<weight>"; the weight follows the voter's standing)
+> POST /v1/kb/$kid/ok @$tok_v
+> {"v":"node 22.9"}
+< 200
+ok ok$w:num
+
+=== no self vote
+> POST /v1/kb/$kid/ok @$tok_a
+> {}
+< 403
+err auth
+
+=== one vote per root
+> POST /v1/kb/$kid/ok @$tok_v
+> {}
+< 409
+err dup
+
+=== header shows the confirmation with the same weight
+> GET /v1/kb/$kid
+< 200
+$kid fix ok$w bad0 $today by $a
+
+=== report a failure from a third root
+> POST /v1/kb/$kid/bad @$tok_b
+> {"why":"does not apply to pnpm 10"}
+< 200
+ok
+
+=== status entries
+> POST /v1/kb @$tok_a
+> {"kind":"status","title":"registry $r is slow today","symptom":"npm install hangs for minutes $r"}
+< 201
+ok $ks:id
+
+=== empty query lists the latest
+> GET /v1/kb?k=5
+< 200
+$ks $s2:dec2 status registry $r is slow today
+
+=== kind filter
+> GET /v1/kb?q=registry+$r+slow&kind=status&k=5
+< 200
+$ks $s3:dec2 status registry $r is slow today
+
+=== unknown entry
+> GET /v1/kb/kzzzzzz
+< 404
+err notfound
+
+=== bad kind
+> POST /v1/kb @$tok_a
+> {"kind":"rant","title":"x $r"}
+< 400
+err bad
+
+=== post requires a token
+> POST /v1/kb
+> {"kind":"fix","title":"anon $r"}
+< 401
+err auth
+
+=== HTML index
+> GET /kb/
+< 200 html
+
+=== HTML page
+> GET /kb/$kid
+< 200 html
+pnpm $r refuses node 20 on CI runners
